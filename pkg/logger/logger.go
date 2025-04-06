@@ -14,18 +14,6 @@ import (
 var (
 	// 默认日志对象
 	defaultLogger *zapLogger
-	// 全局默认配置
-	defaultConfig = Config{
-		Level:         InfoLevel,
-		EnableConsole: true,
-		EnableFile:    false,
-		Filename:      "app.log",
-		MaxSize:       100,
-		MaxBackups:    10,
-		MaxAge:        30,
-		Compress:      true,
-		Development:   false,
-	}
 )
 
 // zapLogger 是Logger接口的主要实现
