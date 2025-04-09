@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"sweet/pkg/cache"
 	"sweet/pkg/errs"
+	"sweet/pkg/logger"
 
 	"sweet/internal/apps/system/types/entity"
 	"sweet/internal/apps/system/types/query"
@@ -13,8 +16,10 @@ import (
 var (
 	ErrAccountNotFound = errs.New(2000, "账号不存在")
 	ErrAccountExists   = errs.New(2001, "账号已存在")
-	ErrInvalidPassword = errs.New(2002, "密码错误")
-	ErrInvalidUserID   = errs.New(2003, "无效ID")
+	ErrEmailExists     = errs.New(2002, "邮箱已存在")
+	ErrMobileExists    = errs.New(2003, "手机号已存在")
+	ErrInvalidPassword = errs.New(2004, "密码错误")
+	ErrInvalidUserID   = errs.New(2005, "无效ID")
 )
 
 // UserRepository 用户仓储接口
@@ -89,11 +94,34 @@ type LoginListParams struct {
 type userRepository struct {
 	db *gorm.DB
 	q  *query.Query
+	c  *cache.Client
 }
 
 func (u *userRepository) Create(ctx context.Context, user *entity.User) error {
-	//TODO implement me
-	panic("implement me")
+	return u.q.Transaction(func(tx *query.Query) error {
+		do := tx.User.WithContext(ctx)
+		field := tx.User
+		if info, err := do.Where(field.Username.Eq(user.Username)).
+			Or(field.Mobile.Eq(*user.Mobile)).
+			Or(field.Email.Eq(*user.Email)).
+			First(); err == nil {
+			if info.Username == user.Username {
+				return ErrAccountExists
+			} else if info.Mobile == user.Mobile {
+				return ErrMobileExists
+			} else if info.Email == user.Email {
+				return ErrEmailExists
+			}
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Error("查询用户失败", logger.Err(err))
+			return errs.ErrServer
+		}
+		if err := do.Create(user); err != nil {
+			logger.Error("创建用户失败", logger.Err(err))
+			return errs.ErrServer
+		}
+		return nil
+	})
 }
 
 func (u *userRepository) Update(ctx context.Context, user *entity.User) error {
@@ -177,9 +205,10 @@ func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParam
 }
 
 // NewUserRepository 创建用户仓储
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB, c *cache.Client) UserRepository {
 	return &userRepository{
 		db: db,
 		q:  query.Use(db),
+		c:  c,
 	}
 }
