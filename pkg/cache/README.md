@@ -1,189 +1,308 @@
-# Redis缓存包
+# Sweet Redis缓存包
 
-Redis缓存包是一个对Redis客户端的封装，支持单机模式、集群模式和哨兵模式，同时集成了链路追踪功能。
+## 概述
+Sweet Redis缓存包是一个功能完备的Redis客户端封装，提供统一的接口支持单机模式、集群模式和哨兵模式，同时集成了OpenTelemetry链路追踪功能，帮助开发者快速构建高性能、可观测的分布式缓存系统。
 
 ## 特性
+- **多模式支持**：支持Redis单机模式、集群模式和哨兵模式
+- **统一接口**：不同模式下使用相同的接口，方便切换
+- **链路追踪**：集成OpenTelemetry，支持分布式追踪
+- **超时控制**：所有操作支持超时设置
+- **连接池管理**：支持连接池配置，优化性能
+- **错误处理**：统一的错误处理机制，增强可维护性
+- **类型安全**：提供类型安全的API，减少运行时错误
 
-- 支持三种Redis运行模式：单机、集群、哨兵
-- 支持所有常用的Redis数据类型操作：String、Hash、List、Set、ZSet
-- 集成OpenTelemetry链路追踪
-- 统一的错误处理和空值处理
-- 可配置的连接池管理
-- 支持自定义命令执行
-
-## 安装依赖
-
+## 安装
 ```bash
-go get github.com/redis/go-redis/v9
-go get go.opentelemetry.io/otel
+go get github.com/your-organization/sweet/pkg/cache
 ```
 
-## 快速开始
-
-### 创建Redis客户端
-
-```go
-import (
-    "context"
-    "log"
-    "time"
-    
-    "github.com/your-org/sweet/pkg/cache"
-)
-
-func main() {
-    // 单机模式配置
-    config := cache.Config{
-        Mode: cache.ModeSingle,
-        Single: struct {
-            Addr string `json:"addr"`
-        }{
-            Addr: "localhost:6379",
-        },
-        Password:    "",
-        DB:          0,
-        PoolSize:    10,
-        EnableTrace: true,
-    }
-    
-    // 创建客户端
-    client, err := cache.NewClient(config)
-    if err != nil {
-        log.Fatalf("创建Redis客户端失败: %v", err)
-    }
-    defer client.Close()
-    
-    // 使用客户端
-    ctx := context.Background()
-    
-    // 设置值
-    err = client.Set(ctx, "key", "value", time.Hour)
-    if err != nil {
-        log.Printf("设置值失败: %v", err)
-    }
-    
-    // 获取值
-    val, err := client.Get(ctx, "key")
-    if err != nil {
-        log.Printf("获取值失败: %v", err)
-    } else {
-        log.Printf("值: %s", val)
-    }
-}
-```
-
-### 集群模式
+## 配置
+创建Redis客户端需要提供配置，支持以下参数：
 
 ```go
+// 创建Redis配置
 config := cache.Config{
-    Mode: cache.ModeCluster,
-    Cluster: struct {
-        Addrs []string `json:"addrs"`
-    }{
-        Addrs: []string{
-            "127.0.0.1:7000",
+    // 基础配置
+    Mode:         cache.ModeSingle,  // 支持 ModeSingle, ModeCluster, ModeSentinel
+    Username:     "default",         // Redis用户名（可选）
+    Password:     "password",        // Redis密码（可选）
+    DB:           0,                 // 数据库编号
+    EnableTrace:  true,              // 是否启用链路追踪
+    ExecTimeout:  100,               // 执行超时时间（毫秒）
+    
+    // 连接配置
+    ConnTimeout:    500,            // 连接超时（毫秒）
+    ReadTimeout:    500,            // 读取超时（毫秒）
+    WriteTimeout:   500,            // 写入超时（毫秒）
+    PoolSize:       10,             // 连接池大小
+    MinIdleConns:   2,              // 最小空闲连接数
+    IdleTimeout:    60,             // 空闲超时（秒）
+    
+    // 重试配置
+    MaxRetries:      3,             // 最大重试次数
+    RetryDelay:      100,           // 重试延迟（毫秒）
+    MinRetryBackoff: 8,             // 最小重试退避时间（毫秒）
+    MaxRetryBackoff: 512,           // 最大重试退避时间（毫秒）
+    
+    // 单机模式配置
+    Single: cache.SingleConfig{
+        Addr: "localhost:6379",     // 单机地址
+    },
+    
+    // 集群模式配置
+    Cluster: cache.ClusterConfig{
+        Addrs: []string{            // 集群节点地址
             "127.0.0.1:7001",
             "127.0.0.1:7002",
+            "127.0.0.1:7003",
         },
     },
-    Password:    "",
-    PoolSize:    10,
-    EnableTrace: true,
-}
-```
-
-### 哨兵模式
-
-```go
-config := cache.Config{
-    Mode: cache.ModeSentinel,
-    Sentinel: struct {
-        MasterName string   `json:"master_name"`
-        Addrs      []string `json:"addrs"`
-    }{
-        MasterName: "mymaster",
-        Addrs: []string{
+    
+    // 哨兵模式配置
+    Sentinel: cache.SentinelConfig{
+        MasterName: "mymaster",     // 主节点名称
+        Addrs: []string{            // 哨兵节点地址
             "127.0.0.1:26379",
             "127.0.0.1:26380",
             "127.0.0.1:26381",
         },
     },
-    Password:    "",
-    DB:          0,
-    PoolSize:    10,
-    EnableTrace: true,
 }
 ```
 
-## 配置项
+## 使用示例
 
-| 配置项 | 说明 | 默认值 |
-|-------|------|--------|
-| Mode | Redis模式：单机(single)、集群(cluster)、哨兵(sentinel) | 必填 |
-| Single.Addr | 单机模式Redis地址 | 必填(单机模式) |
-| Cluster.Addrs | 集群模式Redis节点地址列表 | 必填(集群模式) |
-| Sentinel.MasterName | 哨兵模式主节点名称 | 必填(哨兵模式) |
-| Sentinel.Addrs | 哨兵节点地址列表 | 必填(哨兵模式) |
-| Username | 用户名 | "" |
-| Password | 密码 | "" |
-| DB | 数据库编号(仅单机和哨兵模式) | 0 |
-| PoolSize | 连接池大小 | 10 |
-| MinIdleConns | 最小空闲连接数 | 5 |
-| IdleTimeout | 连接最大空闲时间(秒) | 300 |
-| ConnTimeout | 连接超时时间(毫秒) | 5000 |
-| ReadTimeout | 读取超时时间(毫秒) | 3000 |
-| WriteTimeout | 写入超时时间(毫秒) | 3000 |
-| MaxRetries | 最大重试次数 | 3 |
-| RetryDelay | 重试间隔(毫秒) | 100 |
-| MinRetryBackoff | 最小重试间隔(毫秒) | 8 |
-| MaxRetryBackoff | 最大重试间隔(毫秒) | 512 |
-| EnableTrace | 是否开启链路追踪 | false |
+### 客户端创建
+```go
+import (
+    "context"
+    "fmt"
+    "time"
+    
+    "github.com/your-organization/sweet/pkg/cache"
+)
 
-## 支持的Redis操作
+func main() {
+    // 创建配置
+    config := cache.Config{
+        Mode: cache.ModeSingle,
+        Single: cache.SingleConfig{
+            Addr: "localhost:6379",
+        },
+    }
+    
+    // 创建客户端
+    client, err := cache.NewClient(config)
+    if err != nil {
+        panic(err)
+    }
+    defer client.Close()
+    
+    // 使用客户端...
+}
+```
 
 ### 字符串操作
+```go
+// 设置值
+err := client.Set(ctx, "key", "value", 10*time.Minute)
+if err != nil {
+    // 处理错误
+}
 
-- `Get`: 获取键值
-- `Set`: 设置键值
-- `SetNX`: 不存在时设置键值
-- `Del`: 删除键
-- `Exists`: 检查键是否存在
-- `Expire`: 设置过期时间
-- `TTL`: 获取剩余生存时间
+// 获取值
+val, err := client.Get(ctx, "key")
+if err != nil {
+    if errors.Is(err, cache.ErrKeyNotExists) {
+        // 键不存在处理
+    } else {
+        // 其他错误处理
+    }
+}
+
+// 检查并获取值
+val, exists, err := client.GetWithExists(ctx, "key")
+if err != nil {
+    // 处理错误
+} else if !exists {
+    // 键不存在处理
+} else {
+    // 使用值
+}
+```
 
 ### 哈希表操作
+```go
+// 设置哈希表字段
+n, err := client.HSet(ctx, "hash", "field1", "value1", "field2", "value2")
+if err != nil {
+    // 处理错误
+}
 
-- `HGet`: 获取哈希表字段值
-- `HSet`: 设置哈希表字段值
-- `HGetAll`: 获取哈希表所有字段和值
-- `HDel`: 删除哈希表字段
-- `HExists`: 检查哈希表字段是否存在
+// 获取哈希表字段
+val, err := client.HGet(ctx, "hash", "field1")
+if err != nil {
+    // 处理错误
+}
+
+// 获取所有字段和值
+fields, err := client.HGetAll(ctx, "hash")
+if err != nil {
+    // 处理错误
+}
+```
 
 ### 列表操作
+```go
+// 添加元素到列表头部
+n, err := client.LPush(ctx, "list", "value1", "value2")
+if err != nil {
+    // 处理错误
+}
 
-- `LPush`: 将值插入到列表头部
-- `RPush`: 将值插入到列表尾部
-- `LPop`: 移除并返回列表第一个元素
-- `RPop`: 移除并返回列表最后一个元素
-- `LRange`: 获取列表指定范围内的元素
-- `LLen`: 获取列表长度
+// 从列表尾部弹出元素
+val, err := client.RPop(ctx, "list")
+if err != nil {
+    // 处理错误
+}
+
+// 获取列表范围
+vals, err := client.LRange(ctx, "list", 0, -1)
+if err != nil {
+    // 处理错误
+}
+```
 
 ### 集合操作
+```go
+// 添加元素到集合
+n, err := client.SAdd(ctx, "set", "member1", "member2")
+if err != nil {
+    // 处理错误
+}
 
-- `SAdd`: 向集合添加一个或多个成员
-- `SMembers`: 返回集合中的所有成员
-- `SRem`: 移除集合中一个或多个成员
-- `SIsMember`: 判断成员是否是集合的成员
-- `SCard`: 获取集合的成员数
+// 获取集合成员
+members, err := client.SMembers(ctx, "set")
+if err != nil {
+    // 处理错误
+}
+
+// 检查成员是否存在
+exists, err := client.SIsMember(ctx, "set", "member1")
+if err != nil {
+    // 处理错误
+}
+```
 
 ### 有序集合操作
+```go
+// 添加元素到有序集合
+members := []*cache.Z{
+    {Score: 1.0, Member: "member1"},
+    {Score: 2.0, Member: "member2"},
+}
+n, err := client.ZAdd(ctx, "zset", members...)
+if err != nil {
+    // 处理错误
+}
 
-- `ZAdd`: 向有序集合添加一个或多个成员
-- `ZRange`: 返回有序集合中指定范围的成员
-- `ZRangeWithScores`: 返回有序集合中指定范围的成员和分数
-- `ZRem`: 移除有序集合中的一个或多个成员
-- `ZCard`: 获取有序集合的成员数
+// 获取有序集合范围（带分数）
+membersWithScores, err := client.ZRangeWithScores(ctx, "zset", 0, -1)
+if err != nil {
+    // 处理错误
+}
+```
 
-### 自定义命令
+### 执行自定义命令
+```go
+// 执行PING命令
+result, err := client.Do(ctx, "PING")
+if err != nil {
+    // 处理错误
+}
 
-- `Do`: 执行自定义命令 
+// 执行INFO命令
+info, err := client.Do(ctx, "INFO", "server")
+if err != nil {
+    // 处理错误
+}
+```
+
+## 错误处理
+
+包提供了以下错误类型：
+
+- `ErrKeyNotExists`: 键不存在
+- `ErrEmptyAddrs`: 未提供服务器地址
+- `ErrEmptyMasterSet`: 哨兵模式未提供主节点名称
+- `ErrInvalidMode`: 无效的Redis模式
+- `ErrCommandFailed`: 命令执行失败
+- `ConnectionError`: 连接错误，包含地址和底层错误
+- `CommandError`: 命令错误，包含命令名称和底层错误
+
+示例：
+```go
+val, err := client.Get(ctx, "non-existing-key")
+if err != nil {
+    if errors.Is(err, cache.ErrKeyNotExists) {
+        // 键不存在处理
+    } else if cmdErr, ok := err.(*cache.CommandError); ok {
+        fmt.Printf("命令 %s 执行失败: %v\n", cmdErr.Command, cmdErr.Err)
+    } else if connErr, ok := err.(*cache.ConnectionError); ok {
+        fmt.Printf("连接 %s 失败: %v\n", connErr.Addr, connErr.Err)
+    } else {
+        // 其他错误处理
+    }
+}
+```
+
+## 链路追踪
+
+启用链路追踪需设置`EnableTrace: true`，并确保应用初始化了OpenTelemetry：
+
+```go
+import (
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/exporters/jaeger"
+    "go.opentelemetry.io/otel/sdk/resource"
+    sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+)
+
+func initTracer() {
+    // 初始化Jaeger导出器
+    exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
+    if err != nil {
+        panic(err)
+    }
+    
+    // 创建资源
+    res, err := resource.New(context.Background(),
+        resource.WithAttributes(
+            semconv.ServiceNameKey.String("service-name"),
+        ),
+    )
+    if err != nil {
+        panic(err)
+    }
+    
+    // 注册提供者
+    tp := sdktrace.NewTracerProvider(
+        sdktrace.WithBatcher(exporter),
+        sdktrace.WithResource(res),
+    )
+    otel.SetTracerProvider(tp)
+}
+```
+
+## 性能优化
+
+建议：
+1. 根据实际需求调整连接池大小和空闲连接数
+2. 设置合理的超时时间避免长时间阻塞
+3. 大批量操作考虑使用Pipeline
+4. 避免在热路径上创建和销毁客户端
+
+## 许可证
+MIT License 

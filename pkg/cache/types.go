@@ -12,30 +12,39 @@ const (
 	ModeSentinel Mode = "sentinel"
 )
 
+// SingleConfig 单机模式配置
+type SingleConfig struct {
+	// Redis服务器地址，格式：host:port
+	Addr string `json:"addr"`
+}
+
+// ClusterConfig 集群模式配置
+type ClusterConfig struct {
+	// Redis集群节点地址列表
+	Addrs []string `json:"addrs"`
+}
+
+// SentinelConfig 哨兵模式配置
+type SentinelConfig struct {
+	// 主节点名称
+	MasterName string `json:"master_name"`
+	// 哨兵节点地址列表
+	Addrs []string `json:"addrs"`
+}
+
 // Config Redis配置
 type Config struct {
 	// 运行模式：单机、集群、哨兵
 	Mode Mode `json:"mode"`
 
 	// 单机模式配置
-	Single struct {
-		// Redis服务器地址，格式：host:port
-		Addr string `json:"addr"`
-	} `json:"single"`
+	Single SingleConfig `json:"single"`
 
 	// 集群模式配置
-	Cluster struct {
-		// Redis集群节点地址列表
-		Addrs []string `json:"addrs"`
-	} `json:"cluster"`
+	Cluster ClusterConfig `json:"cluster"`
 
 	// 哨兵模式配置
-	Sentinel struct {
-		// 主节点名称
-		MasterName string `json:"master_name"`
-		// 哨兵节点地址列表
-		Addrs []string `json:"addrs"`
-	} `json:"sentinel"`
+	Sentinel SentinelConfig `json:"sentinel"`
 
 	// 通用配置
 	// 用户名
@@ -48,7 +57,7 @@ type Config struct {
 	PoolSize int `json:"pool_size"`
 	// 最小空闲连接数
 	MinIdleConns int `json:"min_idle_conns"`
-	// 连接最大空闲时间
+	// 连接最大空闲时间(秒)
 	IdleTimeout int `json:"idle_timeout"`
 	// 连接超时时间(毫秒)
 	ConnTimeout int `json:"conn_timeout"`
@@ -68,4 +77,31 @@ type Config struct {
 	MaxRetryBackoff int `json:"max_retry_backoff"`
 	// 是否开启链路追踪
 	EnableTrace bool `json:"enable_trace"`
+	// 是否启用读写分离(仅哨兵模式有效)
+	EnableReadWrite bool `json:"enable_read_write"`
+}
+
+// Z 有序集合成员
+type Z struct {
+	Score  float64
+	Member interface{}
+}
+
+// KeyValue 键值对
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
+// ScriptResult Lua脚本执行结果
+type ScriptResult struct {
+	Value interface{}
+	Err   error
+}
+
+// PubSubMessage 发布订阅消息
+type PubSubMessage struct {
+	Channel string
+	Pattern string
+	Payload string
 }

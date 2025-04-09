@@ -8,83 +8,64 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
-
-// Client Redis客户端接口
-type Client interface {
-	// 关闭连接
-	Close() error
-	// 执行自定义命令
-	Do(ctx context.Context, args ...interface{}) (interface{}, error)
-
-	// String操作
-	Get(ctx context.Context, key string) (string, error)
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
-	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
-	Del(ctx context.Context, keys ...string) (int64, error)
-	Exists(ctx context.Context, keys ...string) (int64, error)
-	Expire(ctx context.Context, key string, expiration time.Duration) (bool, error)
-	TTL(ctx context.Context, key string) (time.Duration, error)
-
-	// Hash操作
-	HGet(ctx context.Context, key, field string) (string, error)
-	HSet(ctx context.Context, key string, values ...interface{}) (int64, error)
-	HGetAll(ctx context.Context, key string) (map[string]string, error)
-	HDel(ctx context.Context, key string, fields ...string) (int64, error)
-	HExists(ctx context.Context, key, field string) (bool, error)
-
-	// List操作
-	LPush(ctx context.Context, key string, values ...interface{}) (int64, error)
-	RPush(ctx context.Context, key string, values ...interface{}) (int64, error)
-	LPop(ctx context.Context, key string) (string, error)
-	RPop(ctx context.Context, key string) (string, error)
-	LRange(ctx context.Context, key string, start, stop int64) ([]string, error)
-	LLen(ctx context.Context, key string) (int64, error)
-
-	// Set操作
-	SAdd(ctx context.Context, key string, members ...interface{}) (int64, error)
-	SMembers(ctx context.Context, key string) ([]string, error)
-	SRem(ctx context.Context, key string, members ...interface{}) (int64, error)
-	SIsMember(ctx context.Context, key string, member interface{}) (bool, error)
-	SCard(ctx context.Context, key string) (int64, error)
-
-	// ZSet操作
-	ZAdd(ctx context.Context, key string, members ...*Z) (int64, error)
-	ZRange(ctx context.Context, key string, start, stop int64) ([]string, error)
-	ZRangeWithScores(ctx context.Context, key string, start, stop int64) ([]*Z, error)
-	ZRem(ctx context.Context, key string, members ...interface{}) (int64, error)
-	ZCard(ctx context.Context, key string) (int64, error)
-}
-
-// Z 有序集合成员
-type Z struct {
-	Score  float64
-	Member interface{}
-}
 
 // 基础客户端
 type baseClient struct {
 	enableTrace bool
 	tracer      trace.Tracer
+	execTimeout int
 }
 
-// 单机模式客户端
-type singleClient struct {
-	baseClient
-	client *redis.Client
+// 开始链路追踪
+func (c *baseClient) startTrace(ctx context.Context, op string, attrs ...attribute.KeyValue) (context.Context, trace.Span) {
+	if !c.enableTrace {
+		return ctx, nil
+	}
+	return c.tracer.Start(ctx, op, trace.WithAttributes(attrs...))
 }
 
-// 集群模式客户端
-type clusterClient struct {
-	baseClient
-	client *redis.ClusterClient
+// 结束链路追踪
+func (c *baseClient) endTrace(span trace.Span, err error) {
+	if span == nil {
+		return
+	}
+	if err != nil {
+		span.RecordError(err)
+	}
+	span.End()
 }
 
-// 哨兵模式客户端
-type sentinelClient struct {
-	baseClient
-	client *redis.Client
+// 处理超时
+func (c *baseClient) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	if c.execTimeout > 0 {
+		return context.WithTimeout(ctx, time.Duration(c.execTimeout)*time.Millisecond)
+	}
+	return ctx, func() {}
+}
+
+// 处理redis.Nil错误
+func (c *baseClient) handleNilError(err error) error {
+	if errors.Is(err, redis.Nil) {
+		return ErrKeyNotExists
+	}
+	return err
+}
+
+// 处理命令错误
+func (c *baseClient) handleCommandError(cmd string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, redis.Nil) {
+		return ErrKeyNotExists
+	}
+	return &CommandError{
+		Command: cmd,
+		Err:     err,
+	}
 }
 
 // NewClient 创建Redis客户端
@@ -106,7 +87,7 @@ func NewClient(config Config) (Client, error) {
 	case ModeSentinel:
 		return newSentinelClient(config)
 	default:
-		return nil, errors.New(ErrInvalidMode)
+		return nil, ErrInvalidMode
 	}
 }
 
@@ -115,66 +96,104 @@ func validateConfig(config Config) error {
 	switch config.Mode {
 	case ModeSingle:
 		if config.Single.Addr == "" {
-			return errors.New(ErrEmptyAddrs)
+			return ErrEmptyAddrs
 		}
 	case ModeCluster:
 		if len(config.Cluster.Addrs) == 0 {
-			return errors.New(ErrEmptyAddrs)
+			return ErrEmptyAddrs
 		}
 	case ModeSentinel:
 		if len(config.Sentinel.Addrs) == 0 {
-			return errors.New(ErrEmptyAddrs)
+			return ErrEmptyAddrs
 		}
 		if config.Sentinel.MasterName == "" {
-			return errors.New(ErrEmptyMasterSet)
+			return ErrEmptyMasterSet
 		}
 	default:
-		return errors.New(ErrInvalidMode)
+		return ErrInvalidMode
 	}
 	return nil
 }
 
-// 设置默认值
+// 设置默认配置
 func setDefaultConfig(config *Config) {
-	// 连接池配置
-	if config.PoolSize == 0 {
-		config.PoolSize = defaultPoolSize
-	}
-	if config.MinIdleConns == 0 {
-		config.MinIdleConns = defaultMinIdleConns
-	}
-	if config.IdleTimeout == 0 {
-		config.IdleTimeout = defaultIdleTimeout
-	}
-
-	// 超时设置
-	if config.ConnTimeout == 0 {
+	// 连接超时
+	if config.ConnTimeout <= 0 {
 		config.ConnTimeout = defaultConnTimeout
 	}
-	if config.ReadTimeout == 0 {
+	// 读取超时
+	if config.ReadTimeout <= 0 {
 		config.ReadTimeout = defaultReadTimeout
 	}
-	if config.WriteTimeout == 0 {
+	// 写入超时
+	if config.WriteTimeout <= 0 {
 		config.WriteTimeout = defaultWriteTimeout
 	}
-
-	// 重试设置
-	if config.MaxRetries == 0 {
+	// 最大重试次数
+	if config.MaxRetries <= 0 {
 		config.MaxRetries = defaultMaxRetries
 	}
-	if config.RetryDelay == 0 {
+	// 重试间隔
+	if config.RetryDelay <= 0 {
 		config.RetryDelay = defaultRetryDelay
 	}
-	if config.MinRetryBackoff == 0 {
+	// 最小重试间隔
+	if config.MinRetryBackoff <= 0 {
 		config.MinRetryBackoff = defaultMinRetryBackoff
 	}
-	if config.MaxRetryBackoff == 0 {
+	// 最大重试间隔
+	if config.MaxRetryBackoff <= 0 {
 		config.MaxRetryBackoff = defaultMaxRetryBackoff
+	}
+	// 连接池大小
+	if config.PoolSize <= 0 {
+		config.PoolSize = defaultPoolSize
+	}
+	// 最小空闲连接数
+	if config.MinIdleConns <= 0 {
+		config.MinIdleConns = defaultMinIdleConns
+	}
+	// 连接最大空闲时间
+	if config.IdleTimeout <= 0 {
+		config.IdleTimeout = defaultIdleTimeout
 	}
 }
 
+// 单机客户端实现
+type singleClient struct {
+	client *redis.Client
+	baseClient
+}
+
+// Close 关闭连接
+func (c *singleClient) Close() error {
+	return c.client.Close()
+}
+
+// 集群客户端实现
+type clusterClient struct {
+	client *redis.ClusterClient
+	baseClient
+}
+
+// Close 关闭连接
+func (c *clusterClient) Close() error {
+	return c.client.Close()
+}
+
+// 哨兵客户端实现
+type sentinelClient struct {
+	client *redis.Client
+	baseClient
+}
+
+// Close 关闭连接
+func (c *sentinelClient) Close() error {
+	return c.client.Close()
+}
+
 // 创建单机客户端
-func newSingleClient(config Config) (*singleClient, error) {
+func newSingleClient(config Config) (Client, error) {
 	// 创建连接选项
 	opt := &redis.Options{
 		Addr:            config.Single.Addr,
@@ -199,7 +218,10 @@ func newSingleClient(config Config) (*singleClient, error) {
 	// 检查连接
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("连接Redis失败: %w", err)
+		return nil, &ConnectionError{
+			Addr: config.Single.Addr,
+			Err:  err,
+		}
 	}
 
 	// 创建客户端实例
@@ -207,6 +229,7 @@ func newSingleClient(config Config) (*singleClient, error) {
 		client: client,
 		baseClient: baseClient{
 			enableTrace: config.EnableTrace,
+			execTimeout: config.ExecTimeout,
 		},
 	}
 
@@ -219,7 +242,7 @@ func newSingleClient(config Config) (*singleClient, error) {
 }
 
 // 创建集群客户端
-func newClusterClient(config Config) (*clusterClient, error) {
+func newClusterClient(config Config) (Client, error) {
 	// 创建连接选项
 	opt := &redis.ClusterOptions{
 		Addrs:           config.Cluster.Addrs,
@@ -243,7 +266,10 @@ func newClusterClient(config Config) (*clusterClient, error) {
 	// 检查连接
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("连接Redis集群失败: %w", err)
+		return nil, &ConnectionError{
+			Addr: fmt.Sprintf("%v", config.Cluster.Addrs),
+			Err:  err,
+		}
 	}
 
 	// 创建客户端实例
@@ -251,6 +277,7 @@ func newClusterClient(config Config) (*clusterClient, error) {
 		client: client,
 		baseClient: baseClient{
 			enableTrace: config.EnableTrace,
+			execTimeout: config.ExecTimeout,
 		},
 	}
 
@@ -263,7 +290,7 @@ func newClusterClient(config Config) (*clusterClient, error) {
 }
 
 // 创建哨兵客户端
-func newSentinelClient(config Config) (*sentinelClient, error) {
+func newSentinelClient(config Config) (Client, error) {
 	// 创建连接选项
 	opt := &redis.FailoverOptions{
 		MasterName:      config.Sentinel.MasterName,
@@ -289,7 +316,10 @@ func newSentinelClient(config Config) (*sentinelClient, error) {
 	// 检查连接
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("连接Redis哨兵失败: %w", err)
+		return nil, &ConnectionError{
+			Addr: fmt.Sprintf("%v (master: %s)", config.Sentinel.Addrs, config.Sentinel.MasterName),
+			Err:  err,
+		}
 	}
 
 	// 创建客户端实例
@@ -297,6 +327,7 @@ func newSentinelClient(config Config) (*sentinelClient, error) {
 		client: client,
 		baseClient: baseClient{
 			enableTrace: config.EnableTrace,
+			execTimeout: config.ExecTimeout,
 		},
 	}
 
