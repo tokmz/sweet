@@ -6,6 +6,7 @@ import (
 	"sweet/pkg/cache"
 	"sweet/pkg/errs"
 	"sweet/pkg/logger"
+	"time"
 
 	"sweet/internal/apps/system/types/entity"
 	"sweet/internal/apps/system/types/query"
@@ -71,10 +72,10 @@ type UserListParams struct {
 	RealName string // 真实姓名
 	Mobile   string // 手机号
 	Email    string // 邮箱
-	Status   *int64 // 状态
-	DeptID   *int64 // 部门ID
-	RoleID   *int64 // 角色ID
-	PostID   *int64 // 岗位ID
+	Status   int64  // 状态
+	DeptID   int64  // 部门ID
+	RoleID   int64  // 角色ID
+	PostID   int64  // 岗位ID
 	Page     int    // 页码
 	Size     int    // 每页数量
 }
@@ -125,83 +126,314 @@ func (u *userRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (u *userRepository) Update(ctx context.Context, user *entity.User) error {
-	//TODO implement me
-	panic("implement me")
+	return u.q.Transaction(func(tx *query.Query) error {
+		do := tx.User.WithContext(ctx)
+		field := tx.User
+
+		if info, err := do.Where(field.Username.Eq(user.Username)).
+			Or(field.Mobile.Eq(*user.Mobile)).
+			Or(field.Email.Eq(*user.Email)).
+			First(); err == nil {
+			if info.Username == user.Username {
+				return ErrAccountExists
+			} else if info.Mobile == user.Mobile {
+				return ErrMobileExists
+			} else if info.Email == user.Email {
+				return ErrEmailExists
+			}
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Error("查询用户失败", logger.Err(err))
+			return errs.ErrServer
+		}
+
+		// 更新用户信息
+		if _, err := do.Where(field.ID.Eq(user.ID)).Updates(user); err != nil {
+			logger.Error("更新用户信息失败", logger.Err(err))
+			return errs.ErrServer
+		}
+
+		return nil
+	})
 }
 
 func (u *userRepository) Delete(ctx context.Context, ids []int64) error {
-	//TODO implement me
-	panic("implement me")
+	return u.q.Transaction(func(tx *query.Query) error {
+		do := tx.User.WithContext(ctx)
+		if _, err := do.Where(tx.User.ID.In(ids...)).Delete(); err != nil {
+			logger.Error("删除用户失败", logger.Err(err))
+			return errs.ErrServer
+		}
+		return nil
+	})
 }
 
 func (u *userRepository) FindOne(ctx context.Context, id int64) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.ID.Eq(id)).First(); err == nil {
+		return info, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return nil, errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindOneByUsername(ctx context.Context, username string) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Username.Eq(username)).First(); err == nil {
+		return info, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return nil, errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindOneByEmail(ctx context.Context, email string) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Email.Eq(email)).First(); err == nil {
+		return info, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return nil, errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindOneByMobile(ctx context.Context, mobile string) (*entity.User, error) {
-	//TODO implement me
-	panic("implement me")
+	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Mobile.Eq(mobile)).First(); err == nil {
+		return info, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return nil, errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindList(ctx context.Context, params *UserListParams) (list []*entity.User, total int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	do := u.q.User.WithContext(ctx)
+	field := u.q.User
+	if params.Username != "" {
+		do = do.Where(field.Username.Like("%" + params.Username + "%"))
+	}
+	if params.RealName != "" {
+		do = do.Where(field.RealName.Like("%" + params.RealName + "%"))
+	}
+	if params.Mobile != "" {
+		do = do.Where(field.Mobile.Eq(params.Mobile))
+	}
+	if params.Email != "" {
+		do = do.Where(field.Email.Eq(params.Email))
+	}
+	if params.Status != 0 {
+		do = do.Where(field.Status.Eq(params.Status))
+	}
+
+	if params.DeptID != 0 {
+		do = do.Where(field.DeptID.Eq(params.DeptID))
+	}
+	if params.RoleID != 0 {
+		do = do.Where(field.RoleID.Eq(params.RoleID))
+	}
+	if params.PostID != 0 {
+		do = do.Where(field.PostID.Eq(params.PostID))
+	}
+
+	if list, total, err := do.FindByPage(params.Page, params.Size); err == nil {
+		return list, total, nil
+	} else {
+		logger.Error("查询用户列表失败", logger.Err(err))
+		return nil, 0, errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanOne(ctx context.Context, id int64, val any) error {
-	//TODO implement me
-	panic("implement me")
+	if err := u.q.User.WithContext(ctx).Where(u.q.User.ID.Eq(id)).Scan(val); err == nil {
+		return nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanOneByUsername(ctx context.Context, username string, val any) error {
-	//TODO implement me
-	panic("implement me")
+	if err := u.q.User.WithContext(ctx).Where(u.q.User.Username.Eq(username)).Scan(val); err == nil {
+		return nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanOneByEmail(ctx context.Context, email string, val any) error {
-	//TODO implement me
-	panic("implement me")
+	if err := u.q.User.WithContext(ctx).Where(u.q.User.Email.Eq(email)).Scan(val); err == nil {
+		return nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanOneByMobile(ctx context.Context, mobile string, val any) error {
-	//TODO implement me
-	panic("implement me")
+	if err := u.q.User.WithContext(ctx).Where(u.q.User.Mobile.Eq(mobile)).Scan(val); err == nil {
+		return nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrAccountNotFound
+	} else {
+		logger.Error("查询用户失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanList(ctx context.Context, params *UserListParams, list any, total *int64) error {
-	//TODO implement me
-	panic("implement me")
+	do := u.q.User.WithContext(ctx)
+	field := u.q.User
+	if params.Username != "" {
+		do = do.Where(field.Username.Like("%" + params.Username + "%"))
+	}
+	if params.RealName != "" {
+		do = do.Where(field.RealName.Like("%" + params.RealName + "%"))
+	}
+	if params.Mobile != "" {
+		do = do.Where(field.Mobile.Eq(params.Mobile))
+	}
+	if params.Email != "" {
+		do = do.Where(field.Email.Eq(params.Email))
+	}
+	if params.Status != 0 {
+		do = do.Where(field.Status.Eq(params.Status))
+	}
+	if params.DeptID != 0 {
+		do = do.Where(field.DeptID.Eq(params.DeptID))
+	}
+	if params.RoleID != 0 {
+		do = do.Where(field.RoleID.Eq(params.RoleID))
+	}
+	if params.PostID != 0 {
+		do = do.Where(field.PostID.Eq(params.PostID))
+	}
+
+	if count, err := do.ScanByPage(list, params.Page, params.Size); err == nil {
+		*total = count
+		return nil
+	} else {
+		logger.Error("查询用户列表失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindOneLog(ctx context.Context, id int64) (*entity.LoginLog, error) {
-	//TODO implement me
-	panic("implement me")
+	if info, err := u.q.LoginLog.WithContext(ctx).Where(u.q.LoginLog.ID.Eq(id)).First(); err == nil {
+		return info, nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAccountNotFound
+	} else {
+		logger.Error("查询登录日志失败", logger.Err(err))
+		return nil, errs.ErrServer
+	}
 }
 
 func (u *userRepository) FindListLog(ctx context.Context, params *LoginListParams) (list []*entity.LoginLog, total int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	do := u.q.LoginLog.WithContext(ctx)
+	field := u.q.LoginLog
+	if params.Uid != 0 {
+		do = do.Where(field.UID.Eq(params.Uid))
+	}
+	if params.Status != 0 {
+		do = do.Where(field.Status.Eq(params.Status))
+	}
+	if params.Device != "" {
+		do = do.Where(field.Device.Eq(params.Device))
+	}
+	if params.Os != "" {
+		do = do.Where(field.Os.Eq(params.Os))
+	}
+	if params.Start != "" {
+		if start, err := time.Parse(time.DateTime, params.Start); err == nil {
+			do = do.Where(field.CreatedAt.Gte(start))
+		} else {
+			logger.Error("查询登录日志失败", logger.String("msg", "时间格式错误"), logger.Err(err))
+			return nil, 0, errs.ErrServer
+		}
+	}
+	if params.End != "" {
+		if end, err := time.Parse(time.DateTime, params.End); err == nil {
+			do = do.Where(field.CreatedAt.Lte(end))
+		} else {
+			logger.Error("查询登录日志失败", logger.String("msg", "时间格式错误"), logger.Err(err))
+			return nil, 0, errs.ErrServer
+		}
+	}
+	if list, total, err := do.FindByPage(params.Page, params.Size); err == nil {
+		return list, total, nil
+	} else {
+		logger.Error("查询登录日志列表失败", logger.Err(err))
+		return nil, 0, errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanOneLog(ctx context.Context, id int64, val any) error {
-	//TODO implement me
-	panic("implement me")
+	if err := u.q.LoginLog.WithContext(ctx).Where(u.q.LoginLog.ID.Eq(id)).Scan(val); err == nil {
+		return nil
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrAccountNotFound
+	} else {
+		logger.Error("查询登录日志失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParams, list any, total *int64) error {
-	//TODO implement me
-	panic("implement me")
+	do := u.q.LoginLog.WithContext(ctx)
+	field := u.q.LoginLog
+
+	// 构建查询条件
+	if params.Uid != 0 {
+		do = do.Where(field.UID.Eq(params.Uid))
+	}
+	if params.Status != 0 {
+		do = do.Where(field.Status.Eq(params.Status))
+	}
+	if params.Device != "" {
+		do = do.Where(field.Device.Eq(params.Device))
+	}
+	if params.Os != "" {
+		do = do.Where(field.Os.Eq(params.Os))
+	}
+
+	// 处理时间范围
+	if params.Start != "" {
+		if start, err := time.Parse(time.DateTime, params.Start); err == nil {
+			do = do.Where(field.CreatedAt.Gte(start))
+		} else {
+			logger.Error("扫描登录日志失败", logger.String("msg", "开始时间格式错误"), logger.Err(err))
+			return errs.ErrServer
+		}
+	}
+	if params.End != "" {
+		if end, err := time.Parse(time.DateTime, params.End); err == nil {
+			do = do.Where(field.CreatedAt.Lte(end))
+		} else {
+			logger.Error("扫描登录日志失败", logger.String("msg", "结束时间格式错误"), logger.Err(err))
+			return errs.ErrServer
+		}
+	}
+
+	// 执行分页查询并扫描到指定的结构体
+	if count, err := do.ScanByPage(list, params.Page, params.Size); err == nil {
+		*total = count
+		return nil
+	} else {
+		logger.Error("扫描登录日志列表失败", logger.Err(err))
+		return errs.ErrServer
+	}
 }
 
 // NewUserRepository 创建用户仓储
