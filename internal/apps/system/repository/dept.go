@@ -40,7 +40,7 @@ type DeptRepository interface {
 	Tree(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error)
 
 	// DeptUser 获取部门下用户，如果有子部门，递归查询子部门下用户
-	DeptUser(ctx context.Context, deptID int64) ([]*entity.User, error)
+	DeptUser(ctx context.Context, params DeptUserParams) ([]*entity.User, error)
 }
 
 // DeptListParams 部门列表查询参数
@@ -52,6 +52,12 @@ type DeptListParams struct {
 	ExcludeID *int64 // 排除ID
 	Page      int    // 页码
 	Size      int    // 每页数量
+}
+
+type DeptUserParams struct {
+	ID   int64
+	Page int
+	Size int
 }
 
 // deptRepository 部门仓储实现
@@ -105,7 +111,7 @@ func (d *deptRepository) Tree(ctx context.Context, params *DeptListParams) ([]*e
 	panic("implement me")
 }
 
-func (d *deptRepository) DeptUser(ctx context.Context, deptID int64) ([]*entity.User, error) {
+func (d *deptRepository) DeptUser(ctx context.Context, params DeptUserParams) ([]*entity.User, error) {
 	//TODO implement me
 	panic("implement me")
 }

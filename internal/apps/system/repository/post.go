@@ -28,12 +28,10 @@ type PostRepository interface {
 	Delete(ctx context.Context, ids []int64) error
 	// FindOne 查询岗位
 	FindOne(ctx context.Context, id int64) (*entity.Post, error)
-	// FindByCode 通过编码查询岗位
-	FindByCode(ctx context.Context, code string) (*entity.Post, error)
 	// FindList 查询岗位列表
 	FindList(ctx context.Context, params *PostListParams) (list []*entity.Post, total int64, err error)
-	// CheckHasUsers 检查岗位下是否有用户
-	CheckHasUsers(ctx context.Context, postID int64) (bool, error)
+	// PostUser 岗位的所有用户
+	PostUser(ctx context.Context, params PostUserParams) ([]*entity.User, int64, error)
 }
 
 // PostListParams 岗位列表查询参数
@@ -43,6 +41,12 @@ type PostListParams struct {
 	Status *int64 // 状态
 	Page   int    // 页码
 	Size   int    // 每页数量
+}
+
+type PostUserParams struct {
+	ID   int64
+	Page int
+	Size int
 }
 
 // postRepository 岗位仓储实现
@@ -71,17 +75,12 @@ func (p *postRepository) FindOne(ctx context.Context, id int64) (*entity.Post, e
 	panic("implement me")
 }
 
-func (p *postRepository) FindByCode(ctx context.Context, code string) (*entity.Post, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (p *postRepository) FindList(ctx context.Context, params *PostListParams) (list []*entity.Post, total int64, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *postRepository) CheckHasUsers(ctx context.Context, postID int64) (bool, error) {
+func (p *postRepository) PostUser(ctx context.Context, params PostUserParams) ([]*entity.User, int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
