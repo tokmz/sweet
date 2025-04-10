@@ -1,0 +1,74 @@
+# 应用配置
+app:
+  name: "Sweet System"  # 应用名称
+  version: "1.0.0"     # 应用版本
+  intro: "这是Sweet的后台管理模块"
+
+# 数据库配置
+database:
+  # 主库连接DSN
+  master: "root:wui11413@tcp(127.0.0.1:3306)/sweet_system?charset=utf8mb4&parseTime=True&loc=Local"
+  # 从库连接DSN数组
+  slaves:
+    - "root:wui11413@tcp(127.0.0.1:3306)/sweet_system?charset=utf8mb4&parseTime=True&loc=Local"
+  # 连接池配置
+  pool:
+    max_idle_conns: 10      # 最大空闲连接数
+    max_open_conns: 100     # 最大打开连接数
+    conn_max_lifetime: 3600 # 连接最大生命周期（秒）
+  # 是否开启日志
+  enable_log: true
+  # 是否开启链路追踪
+  enable_trace: true
+  # 慢查询阈值（毫秒）
+  slow_threshold: 500
+  # 数据库驱动类型
+  driver_type: "mysql"
+  # 查询超时设置（毫秒），0表示不设置超时
+  query_timeout: 3000
+  # 最大重试次数
+  max_retries: 3
+  # 重试间隔（毫秒）
+  retry_delay: 100
+
+# 缓存配置
+cache:
+  # 运行模式：single（单机）, cluster（集群）, sentinel（哨兵）
+  mode: "single"
+
+  # 单机模式配置
+  single:
+    addr: "127.0.0.1:6379"
+
+  # 集群模式配置
+  cluster:
+    addrs:
+      - "127.0.0.1:7001"
+      - "127.0.0.1:7002"
+      - "127.0.0.1:7003"
+
+  # 哨兵模式配置
+  sentinel:
+    master_name: "mymaster"
+    addrs:
+      - "127.0.0.1:26379"
+      - "127.0.0.1:26380"
+      - "127.0.0.1:26381"
+
+  # 通用配置
+  username: ""           # Redis用户名（可选）
+  password: "wui11413"           # Redis密码（可选）
+  db: 0                  # 默认使用的数据库，仅单机和哨兵模式有效
+  pool_size: 10          # 连接池大小
+  min_idle_conns: 5      # 最小空闲连接数
+  idle_timeout: 300      # 连接最大空闲时间(秒)
+  conn_timeout: 5000     # 连接超时时间(毫秒)
+  read_timeout: 3000     # 读取超时时间(毫秒)
+  write_timeout: 3000    # 写入超时时间(毫秒)
+  exec_timeout: 0        # 命令执行超时时间(毫秒)，0表示不设置超时
+  max_retries: 3         # 最大重试次数
+  retry_delay: 100       # 重试间隔(毫秒)
+  min_retry_backoff: 8   # 最小重试间隔(毫秒)
+  max_retry_backoff: 512 # 最大重试间隔(毫秒)
+  enable_trace: true     # 是否开启链路追踪
+  enable_read_write: false # 是否启用读写分离(仅哨兵模式有效)

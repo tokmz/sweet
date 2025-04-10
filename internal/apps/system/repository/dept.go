@@ -19,7 +19,6 @@ var (
 	ErrDeptCodeExists  = errs.New(3005, "部门编码已存在")
 )
 
-// DeptRepository 部门仓储接口
 type DeptRepository interface {
 	// Create 创建部门
 	Create(ctx context.Context, dept *entity.Dept) error
@@ -29,20 +28,19 @@ type DeptRepository interface {
 	Delete(ctx context.Context, ids []int64) error
 	// FindOne 查询部门
 	FindOne(ctx context.Context, id int64) (*entity.Dept, error)
-	// FindByCode 通过编码查询部门
-	FindByCode(ctx context.Context, code string) (*entity.Dept, error)
-	// FindByName 通过名称查询部门
-	FindByName(ctx context.Context, name string, parentID int64) (*entity.Dept, error)
-	// FindChildren 查询子部门
-	FindChildren(ctx context.Context, parentID int64) ([]*entity.Dept, error)
-	// FindChildrenIDs 查询子部门ID列表
-	FindChildrenIDs(ctx context.Context, parentID int64) ([]int64, error)
 	// FindList 查询部门列表
 	FindList(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error)
-	// FindTree 查询部门树
-	FindTree(ctx context.Context, params *DeptListParams) ([]*entity.DeptTree, error)
-	// CheckHasUsers 检查部门下是否有用户
-	CheckHasUsers(ctx context.Context, deptID int64) (bool, error)
+	// ScanOne 查询部门
+	ScanOne(ctx context.Context, id int64, val any) error
+	// ScanList 查询部门列表
+	ScanList(ctx context.Context, params *DeptListParams, list any) error
+	// SubDept 查询子部门
+	SubDept(ctx context.Context, id int64) (*entity.Dept, error)
+	// Tree 查询部门树
+	Tree(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error)
+
+	// DeptUser 获取部门下用户，如果有子部门，递归查询子部门下用户
+	DeptUser(ctx context.Context, deptID int64) ([]*entity.User, error)
 }
 
 // DeptListParams 部门列表查询参数
@@ -82,37 +80,32 @@ func (d *deptRepository) FindOne(ctx context.Context, id int64) (*entity.Dept, e
 	panic("implement me")
 }
 
-func (d *deptRepository) FindByCode(ctx context.Context, code string) (*entity.Dept, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *deptRepository) FindByName(ctx context.Context, name string, parentID int64) (*entity.Dept, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *deptRepository) FindChildren(ctx context.Context, parentID int64) ([]*entity.Dept, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *deptRepository) FindChildrenIDs(ctx context.Context, parentID int64) ([]int64, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (d *deptRepository) FindList(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (d *deptRepository) FindTree(ctx context.Context, params *DeptListParams) ([]*entity.DeptTree, error) {
+func (d *deptRepository) ScanOne(ctx context.Context, id int64, val any) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (d *deptRepository) CheckHasUsers(ctx context.Context, deptID int64) (bool, error) {
+func (d *deptRepository) ScanList(ctx context.Context, params *DeptListParams, list any) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *deptRepository) SubDept(ctx context.Context, id int64) (*entity.Dept, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *deptRepository) Tree(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (d *deptRepository) DeptUser(ctx context.Context, deptID int64) ([]*entity.User, error) {
 	//TODO implement me
 	panic("implement me")
 }

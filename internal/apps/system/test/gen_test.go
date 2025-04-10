@@ -1,9 +1,14 @@
 package test
 
 import (
+	"sweet/internal/apps/system"
 	"sweet/internal/apps/system/cmd"
 	"testing"
 )
+
+func TestInit(t *testing.T) {
+	system.Init()
+}
 
 func TestGen(t *testing.T) {
 	if gen, err := cmd.InitGen(&cmd.GenConfig{

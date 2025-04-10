@@ -18,7 +18,6 @@ var (
 	ErrMenuPermissionExists = errs.New(5004, "权限标识已存在")
 )
 
-// MenuRepository 菜单仓储接口
 type MenuRepository interface {
 	// Create 创建菜单
 	Create(ctx context.Context, menu *entity.Menu) error
@@ -28,32 +27,27 @@ type MenuRepository interface {
 	Delete(ctx context.Context, ids []int64) error
 	// FindOne 查询菜单
 	FindOne(ctx context.Context, id int64) (*entity.Menu, error)
-	// FindByPermission 通过权限标识查询菜单
-	FindByPermission(ctx context.Context, permission string) (*entity.Menu, error)
-	// FindChildren 查询子菜单
-	FindChildren(ctx context.Context, parentID int64) ([]*entity.Menu, error)
-	// FindChildrenIDs 查询子菜单ID列表
-	FindChildrenIDs(ctx context.Context, parentID int64) ([]int64, error)
-	// FindList 查询菜单列表
-	FindList(ctx context.Context, params *MenuListParams) ([]*entity.Menu, error)
-	// FindTree 查询菜单树
-	FindTree(ctx context.Context, params *MenuListParams) ([]*entity.MenuTree, error)
-	// FindUserMenus 查询用户菜单列表
-	FindUserMenus(ctx context.Context, userID int64) ([]*entity.Menu, error)
-	// FindUserMenuTree 查询用户菜单树
-	FindUserMenuTree(ctx context.Context, userID int64) ([]*entity.MenuTree, error)
-	// FindUserPermissions 查询用户权限列表
-	FindUserPermissions(ctx context.Context, userID int64) ([]string, error)
+	// ScanOne 查询菜单
+	ScanOne(ctx context.Context, id int64, val any) error
+	// Tree 查询菜单树
+	Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error)
+	// RouteTree 查询路由树 根据角色ID
+	RouteTree(ctx context.Context, rid int64) ([]*RouteTree, int64, error)
+	// ItemTree 查询Item菜单树 用于分配给角色
+	ItemTree(ctx context.Context, rid int64) ([]*ItemTree, int64, error)
 }
 
-// MenuListParams 菜单列表查询参数
-type MenuListParams struct {
-	Name       string // 菜单名称
-	Permission string // 权限标识
-	Status     *int64 // 状态
-	Type       *int64 // 菜单类型
-	ParentID   *int64 // 父菜单ID
-	ExcludeID  *int64 // 排除ID
+// TreeParams 菜单列表查询参数
+type TreeParams struct {
+	Rid  int64  // 角色ID 获取角色的菜单树
+	Pid  int64  // 父菜单ID 获取此ID和子菜单
+	Name string // 菜单名称 模糊查询 同时获取子菜单内容
+}
+
+type RouteTree struct {
+}
+
+type ItemTree struct {
 }
 
 // menuRepository 菜单仓储实现
@@ -82,42 +76,22 @@ func (m *menuRepository) FindOne(ctx context.Context, id int64) (*entity.Menu, e
 	panic("implement me")
 }
 
-func (m *menuRepository) FindByPermission(ctx context.Context, permission string) (*entity.Menu, error) {
+func (m *menuRepository) ScanOne(ctx context.Context, id int64, val any) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *menuRepository) FindChildren(ctx context.Context, parentID int64) ([]*entity.Menu, error) {
+func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *menuRepository) FindChildrenIDs(ctx context.Context, parentID int64) ([]int64, error) {
+func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*RouteTree, int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *menuRepository) FindList(ctx context.Context, params *MenuListParams) ([]*entity.Menu, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *menuRepository) FindTree(ctx context.Context, params *MenuListParams) ([]*entity.MenuTree, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *menuRepository) FindUserMenus(ctx context.Context, userID int64) ([]*entity.Menu, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *menuRepository) FindUserMenuTree(ctx context.Context, userID int64) ([]*entity.MenuTree, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *menuRepository) FindUserPermissions(ctx context.Context, userID int64) ([]string, error) {
+func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, int64, error) {
 	//TODO implement me
 	panic("implement me")
 }
