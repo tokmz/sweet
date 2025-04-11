@@ -371,7 +371,7 @@ func (u *userRepository) FindListLog(ctx context.Context, params *LoginListParam
 			return nil, 0, errs.ErrServer
 		}
 	}
-	if list, total, err := do.FindByPage(params.Page, params.Size); err == nil {
+	if list, total, err = do.FindByPage(params.Page, params.Size); err == nil {
 		return list, total, nil
 	} else {
 		logger.Error("查询登录日志列表失败", logger.Err(err))

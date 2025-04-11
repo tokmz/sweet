@@ -1,0 +1,73 @@
+# Go语言特定忽略
+# 二进制文件
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 编译输出目录
+/bin/
+/dist/
+/build/
+
+# 测试文件
+*.test
+*.prof
+*.out
+coverage.txt
+
+# 依赖/临时目录
+/vendor/
+/tmp/
+/temp/
+
+# IDE和编辑器相关
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.history/
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 证书和敏感信息
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+
+# 日志文件
+*.log
+logs/
+/log/
+
+# 缓存文件
+.cache/
+
+# 数据文件
+*.db
+*.sqlite
+
+# 自动生成的文件
+_gen.go
+*.gen.go
+swagger-ui/
+docs/swagger/
+api/swagger.json
+api/swagger.yaml
+
+# 配置文件（如需要版本控制请移除下面的行）
+# config.yaml
+# config.json
+
+# 其他
+dump.rdb 

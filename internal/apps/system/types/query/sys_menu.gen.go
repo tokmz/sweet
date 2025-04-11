@@ -42,6 +42,13 @@ func newMenu(db *gorm.DB, opts ...gen.DOOption) menu {
 	_menu.AlwaysShow = field.NewInt64(tableName, "always_show")
 	_menu.KeepAlive = field.NewInt64(tableName, "keep_alive")
 	_menu.Target = field.NewString(tableName, "target")
+	_menu.Title = field.NewString(tableName, "title")
+	_menu.ActiveMenu = field.NewString(tableName, "active_menu")
+	_menu.Breadcrumb = field.NewInt64(tableName, "breadcrumb")
+	_menu.Affix = field.NewInt64(tableName, "affix")
+	_menu.FrameSrc = field.NewString(tableName, "frame_src")
+	_menu.FrameLoading = field.NewInt64(tableName, "frame_loading")
+	_menu.Transition = field.NewString(tableName, "transition")
 	_menu.Remark = field.NewString(tableName, "remark")
 	_menu.CreatedBy = field.NewInt64(tableName, "created_by")
 	_menu.UpdatedBy = field.NewInt64(tableName, "updated_by")
@@ -59,29 +66,36 @@ func newMenu(db *gorm.DB, opts ...gen.DOOption) menu {
 type menu struct {
 	menuDo
 
-	ALL        field.Asterisk
-	ID         field.Int64  // 菜单ID
-	ParentID   field.Int64  // 父菜单ID
-	Name       field.String // 菜单名称
-	Permission field.String // 权限标识
-	Type       field.Int64  // 类型 1-目录 2-菜单 3-按钮
-	Path       field.String // 路由地址
-	Component  field.String // 组件路径
-	Redirect   field.String // 重定向地址
-	Icon       field.String // 菜单图标
-	Sort       field.Int64  // 排序
-	Hidden     field.Int64  // 是否隐藏 1-是 2-否
-	Status     field.Int64  // 状态 1-正常 2-禁用
-	AlwaysShow field.Int64  // 是否总是显示 1-是 2-否
-	KeepAlive  field.Int64  // 是否缓存 1-是 2-否
-	Target     field.String // 打开方式 _self _blank
-	Remark     field.String // 备注
-	CreatedBy  field.Int64  // 创建人
-	UpdatedBy  field.Int64  // 更新人
-	CreatedAt  field.Time   // 创建时间
-	UpdatedAt  field.Time   // 更新时间
-	DeletedAt  field.Field  // 删除时间
-	Version    field.Int64  // 乐观锁版本
+	ALL          field.Asterisk
+	ID           field.Int64  // 菜单ID
+	ParentID     field.Int64  // 父菜单ID
+	Name         field.String // 菜单名称
+	Permission   field.String // 权限标识
+	Type         field.Int64  // 类型 1-目录 2-菜单 3-按钮
+	Path         field.String // 路由地址
+	Component    field.String // 组件路径
+	Redirect     field.String // 重定向地址
+	Icon         field.String // 菜单图标
+	Sort         field.Int64  // 排序
+	Hidden       field.Int64  // 是否隐藏 1-是 2-否
+	Status       field.Int64  // 状态 1-正常 2-禁用
+	AlwaysShow   field.Int64  // 是否总是显示 1-是 2-否
+	KeepAlive    field.Int64  // 是否缓存 1-是 2-否
+	Target       field.String // 打开方式 _self _blank
+	Title        field.String // 菜单标题
+	ActiveMenu   field.String // 激活菜单
+	Breadcrumb   field.Int64  // 是否显示面包屑 1-是 2-否
+	Affix        field.Int64  // 是否固定 1-是 2-否
+	FrameSrc     field.String // iframe地址
+	FrameLoading field.Int64  // iframe加载状态 1-是 2-否
+	Transition   field.String // 过渡动画
+	Remark       field.String // 备注
+	CreatedBy    field.Int64  // 创建人
+	UpdatedBy    field.Int64  // 更新人
+	CreatedAt    field.Time   // 创建时间
+	UpdatedAt    field.Time   // 更新时间
+	DeletedAt    field.Field  // 删除时间
+	Version      field.Int64  // 乐观锁版本
 
 	fieldMap map[string]field.Expr
 }
@@ -113,6 +127,13 @@ func (m *menu) updateTableName(table string) *menu {
 	m.AlwaysShow = field.NewInt64(table, "always_show")
 	m.KeepAlive = field.NewInt64(table, "keep_alive")
 	m.Target = field.NewString(table, "target")
+	m.Title = field.NewString(table, "title")
+	m.ActiveMenu = field.NewString(table, "active_menu")
+	m.Breadcrumb = field.NewInt64(table, "breadcrumb")
+	m.Affix = field.NewInt64(table, "affix")
+	m.FrameSrc = field.NewString(table, "frame_src")
+	m.FrameLoading = field.NewInt64(table, "frame_loading")
+	m.Transition = field.NewString(table, "transition")
 	m.Remark = field.NewString(table, "remark")
 	m.CreatedBy = field.NewInt64(table, "created_by")
 	m.UpdatedBy = field.NewInt64(table, "updated_by")
@@ -136,7 +157,7 @@ func (m *menu) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (m *menu) fillFieldMap() {
-	m.fieldMap = make(map[string]field.Expr, 25)
+	m.fieldMap = make(map[string]field.Expr, 32)
 	m.fieldMap["id"] = m.ID
 	m.fieldMap["parent_id"] = m.ParentID
 	m.fieldMap["name"] = m.Name
@@ -152,6 +173,13 @@ func (m *menu) fillFieldMap() {
 	m.fieldMap["always_show"] = m.AlwaysShow
 	m.fieldMap["keep_alive"] = m.KeepAlive
 	m.fieldMap["target"] = m.Target
+	m.fieldMap["title"] = m.Title
+	m.fieldMap["active_menu"] = m.ActiveMenu
+	m.fieldMap["breadcrumb"] = m.Breadcrumb
+	m.fieldMap["affix"] = m.Affix
+	m.fieldMap["frame_src"] = m.FrameSrc
+	m.fieldMap["frame_loading"] = m.FrameLoading
+	m.fieldMap["transition"] = m.Transition
 	m.fieldMap["remark"] = m.Remark
 	m.fieldMap["created_by"] = m.CreatedBy
 	m.fieldMap["updated_by"] = m.UpdatedBy
