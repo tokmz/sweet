@@ -165,10 +165,47 @@ random := utils.RandomString(8) // 例如: "a1b2C3D4"
 randomNum := utils.RandomStringWithCharset(6, "0123456789") // 例如: "123456"
 ```
 
+## 类型转换工具 (conv.go)
+
+提供了一系列类型转换函数，用于在不同数据类型之间进行安全转换。
+
+### 转为字符串
+
+```go
+// 将任意类型转为字符串
+str := utils.ToString(123) // "123"
+str = utils.ToString(true) // "true"
+str = utils.ToString(3.14) // "3.14"
+```
+
+### 转为数值
+
+```go
+// 将任意类型转为int
+num := utils.ToInt("123") // 123
+num = utils.ToInt(true) // 1
+num = utils.ToInt(3.14) // 3
+
+// 将任意类型转为int64
+num64 := utils.ToInt64("123") // 123
+num64 = utils.ToInt64(true) // 1
+num64 = utils.ToInt64(3.14) // 3
+```
+
+### 转为布尔值
+
+```go
+// 将任意类型转为bool
+b := utils.ToBool(1) // true
+b = utils.ToBool("true") // true
+b = utils.ToBool(0) // false
+```
+
 ## 使用场景
 
 1. 数据库模型字段处理：当数据库模型中使用指针类型字段时，可以安全地访问这些字段。
 2. API 响应构建：当需要构建 API 响应时，可以安全地从可能为 nil 的指针中获取值。
 3. 配置参数处理：处理配置参数时，可以安全地获取可能不存在的配置项的默认值。
 4. 数据转换和处理：使用切片工具函数，可以轻松地进行数据转换、过滤和聚合。
-5. 字符串处理：在处理用户输入、格式转换、命名风格变换等场景中使用字符串工具函数。 
+5. 字符串处理：在处理用户输入、格式转换、命名风格变换等场景中使用字符串工具函数。
+6. 类型安全转换：在处理不同数据源或格式时，使用类型转换函数安全地转换数据。 

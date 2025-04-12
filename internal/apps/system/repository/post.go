@@ -30,8 +30,6 @@ type PostRepository interface {
 	FindOne(ctx context.Context, id int64) (*entity.Post, error)
 	// FindList 查询岗位列表
 	FindList(ctx context.Context, params *PostListParams) (list []*entity.Post, total int64, err error)
-	// PostUser 岗位的所有用户
-	PostUser(ctx context.Context, params PostUserParams) ([]*entity.User, int64, error)
 }
 
 // PostListParams 岗位列表查询参数

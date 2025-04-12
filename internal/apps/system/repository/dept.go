@@ -38,9 +38,6 @@ type DeptRepository interface {
 	SubDept(ctx context.Context, id int64) (*entity.Dept, error)
 	// Tree 查询部门树
 	Tree(ctx context.Context, params *DeptListParams) ([]*entity.Dept, error)
-
-	// DeptUser 获取部门下用户，如果有子部门，递归查询子部门下用户
-	DeptUser(ctx context.Context, params DeptUserParams) ([]*entity.User, error)
 }
 
 // DeptListParams 部门列表查询参数

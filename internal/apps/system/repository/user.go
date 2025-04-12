@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	ErrAccountNotFound = errs.New(2000, "账号不存在")
-	ErrAccountExists   = errs.New(2001, "账号已存在")
-	ErrEmailExists     = errs.New(2002, "邮箱已存在")
-	ErrMobileExists    = errs.New(2003, "手机号已存在")
-	ErrInvalidPassword = errs.New(2004, "密码错误")
-	ErrInvalidUserID   = errs.New(2005, "无效ID")
+	ErrAccountNotFound = errs.New(10001, "账号不存在")
+	ErrAccountExists   = errs.New(10002, "账号已存在")
+	ErrEmailExists     = errs.New(10003, "邮箱已存在")
+	ErrMobileExists    = errs.New(10004, "手机号已存在")
+	ErrInvalidPassword = errs.New(10005, "密码错误")
+	ErrInvalidUserID   = errs.New(10006, "无效ID")
 )
 
 // UserRepository 用户仓储接口

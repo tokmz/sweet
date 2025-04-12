@@ -2,7 +2,6 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![Gin](https://img.shields.io/badge/Gin-1.9.0+-6C86E4?style=flat-square&logo=gin)](https://github.com/gin-gonic/gin)
-[![gRPC](https://img.shields.io/badge/gRPC-1.60.0+-4285F4?style=flat-square&logo=google)](https://grpc.io/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
@@ -10,7 +9,7 @@
   <img src="https://via.placeholder.com/200x200?text=Sweet+Logo" alt="Sweet Logo" width="200"/>
 </p>
 
-> 专注社交电商场景的分销商城系统，赋能企业快速构建数字化商业生态
+> 专注社交电商场景的分销商城系统，基于Go+Gin单体架构，赋能企业快速构建数字化商业生态
 
 ## 📑 目录
 
@@ -35,14 +34,14 @@
 
 ## 📋 概述
 
-**Sweet** 是一款专注于社交电商场景的分销商城系统，帮助企业快速搭建多层级分销体系，实现商品销售、裂变推广与团队管理的全链路数字化。系统采用模块化设计，提供开箱即用的功能模块与深度定制能力。
+**Sweet** 是一款专注于社交电商场景的分销商城系统，帮助企业快速搭建多层级分销体系，实现商品销售、裂变推广与团队管理的全链路数字化。系统采用**Go+Gin单体架构**设计，提供开箱即用的功能模块与深度定制能力。
 
 <details>
 <summary><strong>🚀 为什么选择 Sweet?</strong></summary>
 
-- **快速部署**：开箱即用的服务，分钟级完成商城搭建
+- **快速部署**：基于单体架构，开箱即用的服务，分钟级完成商城搭建
 - **灵活定制**：模块化设计，支持按需扩展与品牌定制
-- **高性能**：优化的架构设计，支持大规模并发
+- **高性能**：Go语言高并发能力，优化的架构设计，支持大规模并发
 - **数据驱动**：强大的数据分析能力，助力业务决策
 - **生态开放**：丰富的 API 接口，轻松对接第三方系统
 - **社交裂变**：内置社交分享与裂变工具，实现营销增长
@@ -157,7 +156,9 @@
 
 ## 🔧 技术架构
 
-### 后端技术栈 (单体架构)
+Sweet 采用**单体架构**设计，基于 Go 语言和 Gin 框架构建，具有简单高效、易于开发维护的特点。
+
+### 技术栈
 
 <table>
   <tr>
@@ -183,79 +184,41 @@
   <tr>
     <td rowspan="2">数据存储</td>
     <td>MySQL 8.0+</td>
-    <td>主数据库</td>
+    <td>主数据库，存储业务数据</td>
   </tr>
   <tr>
     <td>Redis 6.0+</td>
-    <td>缓存、会话管理、消息队列 (可选)</td>
+    <td>缓存、会话管理、分布式锁、限流</td>
   </tr>
   <tr>
     <td>认证授权</td>
-    <td>JWT + Casbin (可选)</td>
+    <td>JWT + Casbin</td>
     <td>用户认证与权限管理</td>
   </tr>
   <tr>
     <td>配置管理</td>
-    <td>Viper / 配置文件</td>
-    <td>应用配置加载</td>
+    <td>pkg/config</td>
+    <td>基于Viper的配置管理模块</td>
   </tr>
   <tr>
     <td>日志</td>
-    <td>Zap + Lumberjack</td>
-    <td>高性能日志记录与切割</td>
+    <td>pkg/logger</td>
+    <td>基于Zap的高性能日志记录</td>
   </tr>
   <tr>
-    <td>文档工具</td>
-    <td>Swagger Docs</td>
-    <td>API文档自动生成</td>
+    <td>缓存</td>
+    <td>pkg/cache</td>
+    <td>支持多级缓存、自动过期</td>
   </tr>
   <tr>
-    <td rowspan="2">监控系统</td>
-    <td>Prometheus (可选)</td>
-    <td>指标收集</td>
+    <td>API文档</td>
+    <td>Swagger</td>
+    <td>RESTful API文档自动生成</td>
   </tr>
   <tr>
-    <td>Grafana (可选)</td>
-    <td>可视化监控</td>
-  </tr>
-  <tr>
-    <td rowspan="2">部署</td>
-    <td>Docker</td>
-    <td>容器化</td>
-  </tr>
-  <tr>
-    <td>GitLab CI/GitHub Actions</td>
-    <td>自动化构建部署</td>
-  </tr>
-</table>
-
-### 前端技术栈
-
-<table>
-  <tr>
-    <th>应用场景</th>
-    <th>技术选型</th>
-    <th>说明</th>
-  </tr>
-  <tr>
-    <td>管理后台</td>
-    <td>Vue3 + Element Plus</td>
-    <td>高效企业级中后台解决方案</td>
-  </tr>
-  <tr>
-    <td>小程序</td>
-    <td>uni-app</td>
-    <td>多端统一开发框架</td>
-  </tr>
-  <tr>
-    <td>H5商城</td>
-    <td>Vue3 + Vant</td>
-    <td>移动端UI组件库</td>
-  </tr>
-  <tr>
-    <td>PC端</td>
-    <td>Next.js</td>
-    <td>支持SSR的React框架</td>
+    <td>工具集</td>
+    <td>pkg/utils</td>
+    <td>字符串、切片、指针等通用工具</td>
   </tr>
 </table>
 
@@ -269,18 +232,71 @@
                                                  v
 +--------------------------------------------------+
 |                  Sweet 应用 (Gin)                 |
-| +----------------------------------------------+ |
-| |               业务逻辑层/模块                 | |
-| | (用户, 商品, 订单, 分销, 营销, ...)          | |
-| +----------------------------------------------+ |
-| |               数据访问层 (GORM)               | |
-| +------------------------+---------------------+ |
-|                          |                     |
-|                          v                     v
-| +------------------------+       +-------------+ |
-| |     MySQL 数据库        |       | Redis 缓存   | |
-| +------------------------+       +-------------+ |
-+--------------------------------------------------+
+|                                                  |
+|  +---------------------+  +--------------------+ |
+|  |     HTTP 路由层      |  |    中间件 (Middleware) | |
+|  | (路由分组/版本控制)    |  | (认证/日志/限流/跨域)  | |
+|  +---------------------+  +--------------------+ |
+|                                                  |
+|  +---------------------+  +--------------------+ |
+|  |      业务控制层      |  |     公共服务层      | |
+|  |     Controllers     |  |      Services      | |
+|  +---------------------+  +--------------------+ |
+|                                                  |
+|  +-----------+  +----------+  +----------------+ |
+|  | 数据访问层 |  |  缓存层  |  |    工具包      | |
+|  |  GORM/DAO  |  |  Redis  |  | (utils/config) | |
+|  +-----------+  +----------+  +----------------+ |
+|                                                  |
++------------------+---------------+---------------+
+                   |               |
+      +------------v----+   +------v---------+
+      |   MySQL 数据库   |   |   Redis 缓存    |
+      +-----------------+   +----------------+
+```
+
+---
+
+## 📂 项目结构
+
+采用领域驱动设计思想，按照业务领域划分代码包，在单体应用中实现清晰的模块化：
+
+```
+sweet/
+├── api/                 # API接口层
+│   ├── controllers/     # 控制器
+│   ├── middleware/      # 中间件
+│   ├── request/         # 请求模型
+│   ├── response/        # 响应模型
+│   └── routes/          # 路由定义
+├── cmd/                 # 应用入口
+│   └── server/          # 服务器启动
+├── configs/             # 配置文件
+├── deploy/              # 部署相关
+├── docs/                # 文档
+│   └── swagger/         # Swagger文档
+├── internal/            # 内部代码
+│   ├── apps/            # 业务模块
+│   │   ├── user/        # 用户模块
+│   │   ├── product/     # 商品模块
+│   │   ├── order/       # 订单模块
+│   │   ├── payment/     # 支付模块
+│   │   ├── distribution/# 分销模块
+│   │   ├── marketing/   # 营销模块
+│   │   ├── content/     # 内容模块
+│   │   ├── community/   # 社区圈子模块
+│   │   ├── system/      # 系统模块
+│   │   └── common/      # 通用模块
+│   └── bootstrap/       # 启动初始化
+├── pkg/                 # 工具包
+│   ├── cache/           # 缓存
+│   ├── config/          # 配置
+│   ├── database/        # 数据库
+│   ├── logger/          # 日志
+│   ├── utils/           # 工具函数
+│   └── middleware/      # 公共中间件
+├── tests/               # 测试
+└── web/                 # 静态资源
 ```
 
 ---
