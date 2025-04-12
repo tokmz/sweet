@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"errors"
-	"sweet/pkg/cache"
 	"sweet/pkg/errs"
 	"sweet/pkg/logger"
 	"sweet/pkg/utils"
@@ -52,6 +51,8 @@ type UserRepository interface {
 	ScanOneByMobile(ctx context.Context, mobile string, val any) error
 	// ScanList 查询用户列表
 	ScanList(ctx context.Context, params *UserListParams, list any, total *int64) error
+	// UpdateStatus 批量更新用户状态
+	UpdateStatus(ctx context.Context, ids []int64, status int64) error
 
 	/*
 		登录日志相关
@@ -96,7 +97,6 @@ type LoginListParams struct {
 type userRepository struct {
 	db *gorm.DB
 	q  *query.Query
-	c  *cache.Client
 }
 
 func (u *userRepository) Create(ctx context.Context, user *entity.User) error {
@@ -555,11 +555,52 @@ func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParam
 	}
 }
 
+// UpdateStatus 批量更新用户状态
+func (u *userRepository) UpdateStatus(ctx context.Context, ids []int64, status int64) error {
+	return u.q.Transaction(func(tx *query.Query) error {
+		// 构建更新数据
+		updates := map[string]interface{}{
+			"status": status,
+		}
+
+		// 批量更新用户状态
+		result, err := tx.User.WithContext(ctx).Where(tx.User.ID.In(ids...)).Updates(updates)
+		if err != nil {
+			logger.Error(
+				"批量更新用户状态失败",
+				logger.Err(err),
+				logger.Any("用户ID列表", ids),
+				logger.Int64("状态", status),
+				logger.Int("用户数量", len(ids)),
+			)
+			return errs.ErrServer
+		}
+
+		// 如果没有更新任何记录，说明可能没有匹配的用户ID
+		if result.RowsAffected == 0 {
+			logger.Warn(
+				"批量更新用户状态未影响任何记录",
+				logger.Any("用户ID列表", ids),
+				logger.Int64("状态", status),
+				logger.Int("用户数量", len(ids)),
+			)
+		}
+
+		logger.Info(
+			"批量更新用户状态成功",
+			logger.Any("用户ID列表", ids),
+			logger.Int64("状态", status),
+			logger.Int64("影响行数", result.RowsAffected),
+		)
+
+		return nil
+	})
+}
+
 // NewUserRepository 创建用户仓储
-func NewUserRepository(db *gorm.DB, c *cache.Client) UserRepository {
+func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{
 		db: db,
 		q:  query.Use(db),
-		c:  c,
 	}
 }

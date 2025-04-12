@@ -12,10 +12,10 @@ func New(code int, msg string, data any) *Response {
 }
 
 type Page struct {
-	List  any `json:"list"`
-	Total int `json:"total"`
+	List  any   `json:"list"`
+	Total int64 `json:"total"`
 }
 
-func NewPage(list any, total int) *Page {
+func NewPage(list any, total int64) *Page {
 	return &Page{List: list, Total: total}
 }
