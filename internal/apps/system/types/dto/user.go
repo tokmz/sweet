@@ -9,10 +9,6 @@ type UpdateUserReq struct {
 type FindListUserReq struct {
 }
 
-type UpdateUserStatusReq struct {
-	IdsReq
-}
-
 type ResetPasswordReq struct {
 }
 

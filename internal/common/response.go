@@ -1,4 +1,4 @@
-package resp
+package common
 
 type Response struct {
 	Code    int    `json:"code"`

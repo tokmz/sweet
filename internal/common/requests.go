@@ -1,4 +1,4 @@
-package dto
+package common
 
 type IDReq struct {
 	ID int64 `json:"id" form:"id"`
