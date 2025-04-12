@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sweet/pkg/errs"
 	"sweet/pkg/logger"
+	"sweet/pkg/utils"
 
 	"sweet/internal/apps/system/types/entity"
 	"sweet/internal/apps/system/types/query"
@@ -76,13 +77,24 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 				return ErrRoleCodeExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Error("查询角色失败", logger.Err(err))
+			logger.Error(
+				"查询角色失败",
+				logger.Err(err),
+				logger.String("角色名称", role.Name),
+				logger.String("角色编码", role.Code),
+			)
 			return errs.ErrServer
 		}
 
 		// 创建角色
 		if err := do.Create(role); err != nil {
-			logger.Error("创建角色失败", logger.Err(err))
+			logger.Error(
+				"创建角色失败",
+				logger.Err(err),
+				logger.String("角色名称", role.Name),
+				logger.String("角色编码", role.Code),
+				logger.Int64("角色状态", utils.SafeInt64(role.Status)),
+			)
 			return errs.ErrServer
 		}
 		return nil
@@ -99,7 +111,11 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) error {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrRoleNotFound
 			}
-			logger.Error("查询角色失败", logger.Err(err))
+			logger.Error(
+				"查询角色失败",
+				logger.Err(err),
+				logger.Int64("角色ID", role.ID),
+			)
 			return errs.ErrServer
 		}
 
@@ -108,7 +124,12 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) error {
 			if _, err := do.Where(field.ID.Neq(role.ID), field.Name.Eq(role.Name)).First(); err == nil {
 				return ErrRoleExists
 			} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				logger.Error("检查角色名称唯一性失败", logger.Err(err))
+				logger.Error(
+					"检查角色名称唯一性失败",
+					logger.Err(err),
+					logger.Int64("角色ID", role.ID),
+					logger.String("角色名称", role.Name),
+				)
 				return errs.ErrServer
 			}
 		}
@@ -118,14 +139,25 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) error {
 			if _, err := do.Where(field.ID.Neq(role.ID), field.Code.Eq(role.Code)).First(); err == nil {
 				return ErrRoleCodeExists
 			} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				logger.Error("检查角色编码唯一性失败", logger.Err(err))
+				logger.Error(
+					"检查角色编码唯一性失败",
+					logger.Err(err),
+					logger.Int64("角色ID", role.ID),
+					logger.String("角色编码", role.Code),
+				)
 				return errs.ErrServer
 			}
 		}
 
 		// 更新角色信息
 		if _, err := do.Where(field.ID.Eq(role.ID)).Updates(role); err != nil {
-			logger.Error("更新角色失败", logger.Err(err))
+			logger.Error(
+				"更新角色失败",
+				logger.Err(err),
+				logger.Int64("角色ID", role.ID),
+				logger.String("角色名称", role.Name),
+				logger.String("角色编码", role.Code),
+			)
 			return errs.ErrServer
 		}
 
@@ -148,15 +180,28 @@ func (r *roleRepository) Delete(ctx context.Context, ids []int64) error {
 
 		// 删除角色和角色菜单关联
 		if result, err := tx.WithContext(ctx).RoleMenu.Where(tx.RoleMenu.RoleID.In(ids...)).Delete(); err != nil {
-			logger.Error("删除角色菜单关联失败", logger.Err(err))
+			logger.Error(
+				"删除角色菜单关联失败",
+				logger.Err(err),
+				logger.Any("角色ID列表", ids),
+			)
 			return errs.ErrServer
 		} else {
-			logger.Debug("删除角色菜单关联", logger.Int64("count", result.RowsAffected))
+			logger.Debug(
+				"删除角色菜单关联",
+				logger.Int64("关联数量", result.RowsAffected),
+				logger.Any("角色ID列表", ids),
+			)
 		}
 
 		// 删除角色
 		if _, err := tx.Role.WithContext(ctx).Where(tx.Role.ID.In(ids...)).Delete(); err != nil {
-			logger.Error("删除角色失败", logger.Err(err))
+			logger.Error(
+				"删除角色失败",
+				logger.Err(err),
+				logger.Any("角色ID列表", ids),
+				logger.Int("删除数量", len(ids)),
+			)
 			return errs.ErrServer
 		}
 
@@ -170,7 +215,11 @@ func (r *roleRepository) FindOne(ctx context.Context, id int64) (*entity.Role, e
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrRoleNotFound
 	} else {
-		logger.Error("查询角色失败", logger.Err(err))
+		logger.Error(
+			"查询角色失败",
+			logger.Err(err),
+			logger.Int64("角色ID", id),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -197,7 +246,14 @@ func (r *roleRepository) FindList(ctx context.Context, params *RoleListParams) (
 	if list, total, err = do.FindByPage(params.Page, params.Size); err == nil {
 		return list, total, nil
 	} else {
-		logger.Error("查询角色列表失败", logger.Err(err))
+		logger.Error(
+			"查询角色列表失败",
+			logger.Err(err),
+			logger.String("角色名称", params.Name),
+			logger.String("角色编码", params.Code),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return nil, 0, errs.ErrServer
 	}
 }
@@ -208,7 +264,11 @@ func (r *roleRepository) ScanOne(ctx context.Context, id int64, val any) error {
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrRoleNotFound
 	} else {
-		logger.Error("查询角色失败", logger.Err(err))
+		logger.Error(
+			"查询角色失败",
+			logger.Err(err),
+			logger.Int64("角色ID", id),
+		)
 		return errs.ErrServer
 	}
 }
@@ -236,7 +296,14 @@ func (r *roleRepository) ScanList(ctx context.Context, params *RoleListParams, l
 		*total = count
 		return nil
 	} else {
-		logger.Error("查询角色列表失败", logger.Err(err))
+		logger.Error(
+			"查询角色列表失败",
+			logger.Err(err),
+			logger.String("角色名称", params.Name),
+			logger.String("角色编码", params.Code),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return errs.ErrServer
 	}
 }
@@ -244,7 +311,11 @@ func (r *roleRepository) ScanList(ctx context.Context, params *RoleListParams, l
 func (r *roleRepository) CheckHasUsers(ctx context.Context, roleID int64) ([]int64, error) {
 	var userIds []int64
 	if err := r.q.User.WithContext(ctx).Where(r.q.User.RoleID.Eq(roleID)).Select(r.q.User.ID).Scan(&userIds); err != nil {
-		logger.Error("查询角色下用户失败", logger.Err(err))
+		logger.Error(
+			"查询角色下用户失败",
+			logger.Err(err),
+			logger.Int64("角色ID", roleID),
+		)
 		return nil, errs.ErrServer
 	}
 	return userIds, nil
@@ -257,16 +328,28 @@ func (r *roleRepository) AssignMenus(ctx context.Context, roleID int64, menuIds 
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrRoleNotFound
 			}
-			logger.Error("查询角色失败", logger.Err(err))
+			logger.Error(
+				"查询角色失败",
+				logger.Err(err),
+				logger.Int64("角色ID", roleID),
+			)
 			return errs.ErrServer
 		}
 
 		// 删除原有的角色菜单关联
 		if result, err := tx.WithContext(ctx).RoleMenu.Where(tx.RoleMenu.RoleID.Eq(roleID)).Delete(); err != nil {
-			logger.Error("删除角色菜单关联失败", logger.Err(err))
+			logger.Error(
+				"删除角色菜单关联失败",
+				logger.Err(err),
+				logger.Int64("角色ID", roleID),
+			)
 			return errs.ErrServer
 		} else {
-			logger.Debug("删除角色菜单关联", logger.Int64("count", result.RowsAffected))
+			logger.Debug(
+				"删除角色菜单关联",
+				logger.Int64("关联数量", result.RowsAffected),
+				logger.Int64("角色ID", roleID),
+			)
 		}
 
 		// 添加新的角色菜单关联
@@ -279,7 +362,12 @@ func (r *roleRepository) AssignMenus(ctx context.Context, roleID int64, menuIds 
 				})
 			}
 			if err := tx.WithContext(ctx).RoleMenu.Create(roleMenus...); err != nil {
-				logger.Error("创建角色菜单关联失败", logger.Err(err))
+				logger.Error(
+					"创建角色菜单关联失败",
+					logger.Err(err),
+					logger.Int64("角色ID", roleID),
+					logger.Int("菜单数量", len(menuIds)),
+				)
 				return errs.ErrServer
 			}
 		}
@@ -302,7 +390,12 @@ func (r *roleRepository) FindMenusTree(ctx context.Context, roleID int64) ([]*en
 
 	menus, err := r.q.Menu.WithContext(ctx).Where(r.q.Menu.ID.In(menuIds...)).Find()
 	if err != nil {
-		logger.Error("查询角色菜单失败", logger.Err(err))
+		logger.Error(
+			"查询角色菜单失败",
+			logger.Err(err),
+			logger.Int64("角色ID", roleID),
+			logger.Int("菜单ID数量", len(menuIds)),
+		)
 		return nil, errs.ErrServer
 	}
 
@@ -313,7 +406,11 @@ func (r *roleRepository) FindMenusTree(ctx context.Context, roleID int64) ([]*en
 func (r *roleRepository) FindMenusIds(ctx context.Context, roleID int64) ([]int64, error) {
 	var menuIds []int64
 	if err := r.q.RoleMenu.WithContext(ctx).Where(r.q.RoleMenu.RoleID.Eq(roleID)).Select(r.q.RoleMenu.MenuID).Scan(&menuIds); err != nil {
-		logger.Error("查询角色菜单ID失败", logger.Err(err))
+		logger.Error(
+			"查询角色菜单ID失败",
+			logger.Err(err),
+			logger.Int64("角色ID", roleID),
+		)
 		return nil, errs.ErrServer
 	}
 	return menuIds, nil

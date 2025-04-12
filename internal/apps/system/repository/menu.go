@@ -16,13 +16,11 @@ import (
 )
 
 var (
-	ErrMenuNotFound         = errs.New(5000, "菜单不存在")
-	ErrMenuExists           = errs.New(5001, "菜单已存在")
-	ErrMenuHasChildren      = errs.New(5002, "存在子菜单，无法删除")
-	ErrInvalidMenuID        = errs.New(5003, "无效菜单ID")
-	ErrMenuPermissionExists = errs.New(5004, "权限标识已存在")
-	ErrMenuNameExists       = errs.New(5005, "菜单名称已存在")
-	ErrMenuPathExists       = errs.New(5006, "路由路径已存在")
+	ErrMenuNotFound         = errs.New(10301, "菜单不存在")
+	ErrMenuHasChildren      = errs.New(10302, "存在子菜单，无法删除")
+	ErrMenuPermissionExists = errs.New(10303, "权限标识已存在")
+	ErrMenuNameExists       = errs.New(10304, "菜单名称已存在")
+	ErrMenuPathExists       = errs.New(10305, "路由路径已存在")
 )
 
 type MenuRepository interface {
@@ -111,11 +109,23 @@ func (m *menuRepository) Create(ctx context.Context, menu *entity.Menu) error {
 				return ErrMenuPathExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Error("查询菜单失败", logger.Err(err))
+			logger.Error(
+				"查询菜单失败",
+				logger.Err(err),
+				logger.String("菜单名称", menu.Name),
+				logger.String("权限标识", utils.SafeString(menu.Permission)),
+				logger.String("路由路径", utils.SafeString(menu.Path)),
+			)
 			return errs.ErrServer
 		}
 		if err := do.Create(menu); err != nil {
-			logger.Error("创建菜单失败", logger.Err(err))
+			logger.Error(
+				"创建菜单失败",
+				logger.Err(err),
+				logger.String("菜单名称", menu.Name),
+				logger.Int64("菜单类型", menu.Type),
+				logger.Int64("父ID", utils.SafeInt64(menu.ParentID)),
+			)
 			return errs.ErrServer
 		}
 		return nil
@@ -132,7 +142,11 @@ func (m *menuRepository) Update(ctx context.Context, menu *entity.Menu) error {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrMenuNotFound
 			}
-			logger.Error("查询菜单失败", logger.Err(err))
+			logger.Error(
+				"查询菜单失败",
+				logger.Err(err),
+				logger.Int64("菜单ID", menu.ID),
+			)
 			return errs.ErrServer
 		}
 
@@ -151,13 +165,26 @@ func (m *menuRepository) Update(ctx context.Context, menu *entity.Menu) error {
 				return ErrMenuPathExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Error("查询菜单冲突失败", logger.Err(err))
+			logger.Error(
+				"查询菜单冲突失败",
+				logger.Err(err),
+				logger.Int64("菜单ID", menu.ID),
+				logger.String("菜单名称", menu.Name),
+				logger.String("权限标识", utils.SafeString(menu.Permission)),
+				logger.String("路由路径", utils.SafeString(menu.Path)),
+			)
 			return errs.ErrServer
 		}
 
 		// 3. 执行更新
 		if _, err := do.Where(field.ID.Eq(menu.ID)).Updates(menu); err != nil {
-			logger.Error("更新菜单失败", logger.Err(err))
+			logger.Error(
+				"更新菜单失败",
+				logger.Err(err),
+				logger.Int64("菜单ID", menu.ID),
+				logger.String("菜单名称", menu.Name),
+				logger.Int64("菜单类型", menu.Type),
+			)
 			return errs.ErrServer
 		}
 
@@ -174,7 +201,11 @@ func (m *menuRepository) Delete(ctx context.Context, ids []int64) error {
 		for _, id := range ids {
 			children, err := do.Where(field.ParentID.Eq(id)).Count()
 			if err != nil {
-				logger.Error("查询子菜单失败", logger.Err(err), logger.Any("id", id))
+				logger.Error(
+					"查询子菜单失败",
+					logger.Err(err),
+					logger.Int64("菜单ID", id),
+				)
 				return errs.ErrServer
 			}
 			if children > 0 {
@@ -189,14 +220,23 @@ func (m *menuRepository) Delete(ctx context.Context, ids []int64) error {
 		for _, id := range ids {
 			count, err := rmDo.Where(rmField.MenuID.Eq(id)).Count()
 			if err != nil {
-				logger.Error("查询角色菜单关联失败", logger.Err(err), logger.Any("id", id))
+				logger.Error(
+					"查询角色菜单关联失败",
+					logger.Err(err),
+					logger.Int64("菜单ID", id),
+				)
 				return errs.ErrServer
 			}
 
 			// 如果存在关联，先删除角色-菜单关联
 			if count > 0 {
-				if _, err := rmDo.Where(rmField.MenuID.Eq(id)).Delete(); err != nil {
-					logger.Error("删除角色菜单关联失败", logger.Err(err), logger.Any("id", id))
+				if _, err = rmDo.Where(rmField.MenuID.Eq(id)).Delete(); err != nil {
+					logger.Error(
+						"删除角色菜单关联失败",
+						logger.Err(err),
+						logger.Int64("菜单ID", id),
+						logger.Int64("关联数量", count),
+					)
 					return errs.ErrServer
 				}
 			}
@@ -204,7 +244,12 @@ func (m *menuRepository) Delete(ctx context.Context, ids []int64) error {
 
 		// 批量删除菜单
 		if _, err := do.Where(field.ID.In(ids...)).Delete(); err != nil {
-			logger.Error("删除菜单失败", logger.Err(err), logger.Any("ids", ids))
+			logger.Error(
+				"删除菜单失败",
+				logger.Err(err),
+				logger.Any("菜单ID列表", ids),
+				logger.Int("删除数量", len(ids)),
+			)
 			return errs.ErrServer
 		}
 
@@ -218,7 +263,11 @@ func (m *menuRepository) FindOne(ctx context.Context, id int64) (*entity.Menu, e
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrMenuNotFound
 		}
-		logger.Error("查询菜单失败", logger.Err(err), logger.Any("id", id))
+		logger.Error(
+			"查询菜单失败",
+			logger.Err(err),
+			logger.Int64("菜单ID", id),
+		)
 		return nil, errs.ErrServer
 	}
 	return menu, nil
@@ -256,24 +305,24 @@ func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entit
 	var err error
 
 	if params.Pid > 0 || params.Name != "" {
-		// 查询条件
-		query := do
+		// 创建查询对象的副本
+		menuQuery := do
 
 		// 按名称模糊查询
 		if params.Name != "" {
-			query = query.Where(field.Name.Like("%" + params.Name + "%"))
+			menuQuery = menuQuery.Where(field.Name.Like("%" + params.Name + "%"))
 		}
 
 		// 获取所有菜单
-		allMenus, err = query.Order(field.Sort).Find()
+		allMenus, err = menuQuery.Order(field.Sort).Find()
 		if err != nil {
-			logger.Error("查询菜单列表失败",
+			logger.Error(
+				"查询菜单列表失败",
 				logger.Err(err),
-				logger.Any("params", map[string]interface{}{
-					"rid":  params.Rid,
-					"pid":  params.Pid,
-					"name": params.Name,
-				}))
+				logger.Int64("角色ID", params.Rid),
+				logger.Int64("父菜单ID", params.Pid),
+				logger.String("菜单名称", params.Name),
+			)
 			return nil, 0, errs.ErrServer
 		}
 
@@ -281,7 +330,12 @@ func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entit
 		if params.Pid > 0 {
 			parentMenu, err = m.FindOne(ctx, params.Pid)
 			if err != nil {
-				logger.Error("查询父菜单失败", logger.Err(err), logger.Any("pid", params.Pid))
+				logger.Error(
+					"查询父菜单失败",
+					logger.Err(err),
+					logger.Int64("父菜单ID", params.Pid),
+					logger.Int64("角色ID", params.Rid),
+				)
 				return nil, 0, err
 			}
 		}
@@ -290,11 +344,11 @@ func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entit
 		var zero int64 = 0
 		allMenus, err = do.Where(field.ParentID.Eq(zero)).Order(field.Sort).Find()
 		if err != nil {
-			logger.Error("查询顶级菜单列表失败",
+			logger.Error(
+				"查询顶级菜单列表失败",
 				logger.Err(err),
-				logger.Any("params", map[string]any{
-					"rid": params.Rid,
-				}))
+				logger.Int64("角色ID", params.Rid),
+			)
 			return nil, 0, errs.ErrServer
 		}
 	}
@@ -340,10 +394,17 @@ func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entit
 			} else {
 				// 子菜单，添加到父菜单的children中
 				if parent, exists := menuMap[*menu.ParentID]; exists {
-					if parent.Children == nil {
-						parent.Children = make([]*entity.Menu, 0)
-					}
 					parent.Children = append(parent.Children, menu)
+				} else {
+					// 父菜单不存在，记录异常情况但继续处理
+					logger.Warn(
+						"菜单的父ID不存在",
+						logger.Int64("菜单ID", menu.ID),
+						logger.String("菜单名称", menu.Name),
+						logger.Int64("父菜单ID", *menu.ParentID),
+					)
+					// 作为根菜单处理
+					rootMenus = append(rootMenus, menu)
 				}
 			}
 		}
@@ -365,7 +426,12 @@ func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*RouteTree
 			Order(menuQ.Sort).
 			Find()
 		if err != nil {
-			return nil, 0, err
+			logger.Error(
+				"管理员查询菜单失败",
+				logger.Err(err),
+				logger.Int64("角色ID", rid),
+			)
+			return nil, 0, errs.ErrServer
 		}
 		menus = result
 	} else {
@@ -377,7 +443,12 @@ func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*RouteTree
 			Order(menuQ.Sort).
 			Find()
 		if err != nil {
-			return nil, 0, err
+			logger.Error(
+				"查询角色关联菜单失败",
+				logger.Err(err),
+				logger.Int64("角色ID", rid),
+			)
+			return nil, 0, errs.ErrServer
 		}
 		menus = result
 	}
@@ -391,7 +462,12 @@ func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, 
 	// 查询所有菜单
 	menus, err := m.q.Menu.WithContext(ctx).Order(m.q.Menu.Sort).Find()
 	if err != nil {
-		return nil, 0, err
+		logger.Error(
+			"查询所有菜单失败",
+			logger.Err(err),
+			logger.Int64("角色ID", rid),
+		)
+		return nil, 0, errs.ErrServer
 	}
 
 	// 查询角色已有菜单
@@ -399,7 +475,12 @@ func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, 
 	if rid > 0 {
 		roleMenus, err := m.q.RoleMenu.WithContext(ctx).Where(m.q.RoleMenu.RoleID.Eq(rid)).Find()
 		if err != nil {
-			return nil, 0, err
+			logger.Error(
+				"查询角色菜单关联失败",
+				logger.Err(err),
+				logger.Int64("角色ID", rid),
+			)
+			return nil, 0, errs.ErrServer
 		}
 
 		for _, rm := range roleMenus {
@@ -441,6 +522,15 @@ func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, 
 			// 子节点
 			if parent, ok := itemMap[utils.SafeInt64(menu.ParentID)]; ok {
 				parent.Children = append(parent.Children, item)
+			} else {
+				logger.Warn(
+					"菜单的父ID不存在",
+					logger.Int64("菜单ID", menu.ID),
+					logger.String("菜单名称", menu.Name),
+					logger.Int64("父菜单ID", utils.SafeInt64(menu.ParentID)),
+				)
+				// 作为根菜单处理
+				rootItems = append(rootItems, item)
 			}
 		}
 	}

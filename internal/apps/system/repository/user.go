@@ -6,6 +6,7 @@ import (
 	"sweet/pkg/cache"
 	"sweet/pkg/errs"
 	"sweet/pkg/logger"
+	"sweet/pkg/utils"
 	"time"
 
 	"sweet/internal/apps/system/types/entity"
@@ -114,11 +115,23 @@ func (u *userRepository) Create(ctx context.Context, user *entity.User) error {
 				return ErrEmailExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Error("查询用户失败", logger.Err(err))
+			logger.Error(
+				"查询用户失败",
+				logger.Err(err),
+				logger.String("用户名", user.Username),
+				logger.String("手机号", utils.SafeString(user.Mobile)),
+				logger.String("邮箱", utils.SafeString(user.Email)),
+			)
 			return errs.ErrServer
 		}
 		if err := do.Create(user); err != nil {
-			logger.Error("创建用户失败", logger.Err(err))
+			logger.Error(
+				"创建用户失败",
+				logger.Err(err),
+				logger.String("用户名", user.Username),
+				logger.String("真实姓名", utils.SafeString(user.RealName)),
+				logger.Int64("用户状态", utils.SafeInt64(user.Status)),
+			)
 			return errs.ErrServer
 		}
 		return nil
@@ -142,13 +155,26 @@ func (u *userRepository) Update(ctx context.Context, user *entity.User) error {
 				return ErrEmailExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Error("查询用户失败", logger.Err(err))
+			logger.Error(
+				"查询用户失败",
+				logger.Err(err),
+				logger.Int64("用户ID", user.ID),
+				logger.String("用户名", user.Username),
+				logger.String("手机号", utils.SafeString(user.Mobile)),
+				logger.String("邮箱", utils.SafeString(user.Email)),
+			)
 			return errs.ErrServer
 		}
 
 		// 更新用户信息
 		if _, err := do.Where(field.ID.Eq(user.ID)).Updates(user); err != nil {
-			logger.Error("更新用户信息失败", logger.Err(err))
+			logger.Error(
+				"更新用户信息失败",
+				logger.Err(err),
+				logger.Int64("用户ID", user.ID),
+				logger.String("用户名", user.Username),
+				logger.Int64("用户状态", utils.SafeInt64(user.Status)),
+			)
 			return errs.ErrServer
 		}
 
@@ -160,7 +186,12 @@ func (u *userRepository) Delete(ctx context.Context, ids []int64) error {
 	return u.q.Transaction(func(tx *query.Query) error {
 		do := tx.User.WithContext(ctx)
 		if _, err := do.Where(tx.User.ID.In(ids...)).Delete(); err != nil {
-			logger.Error("删除用户失败", logger.Err(err))
+			logger.Error(
+				"删除用户失败",
+				logger.Err(err),
+				logger.Any("用户ID列表", ids),
+				logger.Int("删除数量", len(ids)),
+			)
 			return errs.ErrServer
 		}
 		return nil
@@ -173,7 +204,11 @@ func (u *userRepository) FindOne(ctx context.Context, id int64) (*entity.User, e
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.Int64("用户ID", id),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -184,7 +219,11 @@ func (u *userRepository) FindOneByUsername(ctx context.Context, username string)
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("用户名", username),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -195,7 +234,11 @@ func (u *userRepository) FindOneByEmail(ctx context.Context, email string) (*ent
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("邮箱", email),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -206,7 +249,11 @@ func (u *userRepository) FindOneByMobile(ctx context.Context, mobile string) (*e
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("手机号", mobile),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -243,7 +290,14 @@ func (u *userRepository) FindList(ctx context.Context, params *UserListParams) (
 	if list, total, err := do.FindByPage(params.Page, params.Size); err == nil {
 		return list, total, nil
 	} else {
-		logger.Error("查询用户列表失败", logger.Err(err))
+		logger.Error(
+			"查询用户列表失败",
+			logger.Err(err),
+			logger.String("用户名", params.Username),
+			logger.String("真实姓名", params.RealName),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return nil, 0, errs.ErrServer
 	}
 }
@@ -254,7 +308,11 @@ func (u *userRepository) ScanOne(ctx context.Context, id int64, val any) error {
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.Int64("用户ID", id),
+		)
 		return errs.ErrServer
 	}
 }
@@ -265,7 +323,11 @@ func (u *userRepository) ScanOneByUsername(ctx context.Context, username string,
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("用户名", username),
+		)
 		return errs.ErrServer
 	}
 }
@@ -276,7 +338,11 @@ func (u *userRepository) ScanOneByEmail(ctx context.Context, email string, val a
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("邮箱", email),
+		)
 		return errs.ErrServer
 	}
 }
@@ -287,7 +353,11 @@ func (u *userRepository) ScanOneByMobile(ctx context.Context, mobile string, val
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrAccountNotFound
 	} else {
-		logger.Error("查询用户失败", logger.Err(err))
+		logger.Error(
+			"查询用户失败",
+			logger.Err(err),
+			logger.String("手机号", mobile),
+		)
 		return errs.ErrServer
 	}
 }
@@ -324,7 +394,14 @@ func (u *userRepository) ScanList(ctx context.Context, params *UserListParams, l
 		*total = count
 		return nil
 	} else {
-		logger.Error("查询用户列表失败", logger.Err(err))
+		logger.Error(
+			"查询用户列表失败",
+			logger.Err(err),
+			logger.String("用户名", params.Username),
+			logger.String("真实姓名", params.RealName),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return errs.ErrServer
 	}
 }
@@ -335,7 +412,11 @@ func (u *userRepository) FindOneLog(ctx context.Context, id int64) (*entity.Logi
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAccountNotFound
 	} else {
-		logger.Error("查询登录日志失败", logger.Err(err))
+		logger.Error(
+			"查询登录日志失败",
+			logger.Err(err),
+			logger.Int64("日志ID", id),
+		)
 		return nil, errs.ErrServer
 	}
 }
@@ -359,7 +440,12 @@ func (u *userRepository) FindListLog(ctx context.Context, params *LoginListParam
 		if start, err := time.Parse(time.DateTime, params.Start); err == nil {
 			do = do.Where(field.CreatedAt.Gte(start))
 		} else {
-			logger.Error("查询登录日志失败", logger.String("msg", "时间格式错误"), logger.Err(err))
+			logger.Error(
+				"查询登录日志失败",
+				logger.Err(err),
+				logger.String("错误信息", "时间格式错误"),
+				logger.String("开始时间", params.Start),
+			)
 			return nil, 0, errs.ErrServer
 		}
 	}
@@ -367,14 +453,26 @@ func (u *userRepository) FindListLog(ctx context.Context, params *LoginListParam
 		if end, err := time.Parse(time.DateTime, params.End); err == nil {
 			do = do.Where(field.CreatedAt.Lte(end))
 		} else {
-			logger.Error("查询登录日志失败", logger.String("msg", "时间格式错误"), logger.Err(err))
+			logger.Error(
+				"查询登录日志失败",
+				logger.Err(err),
+				logger.String("错误信息", "时间格式错误"),
+				logger.String("结束时间", params.End),
+			)
 			return nil, 0, errs.ErrServer
 		}
 	}
 	if list, total, err = do.FindByPage(params.Page, params.Size); err == nil {
 		return list, total, nil
 	} else {
-		logger.Error("查询登录日志列表失败", logger.Err(err))
+		logger.Error(
+			"查询登录日志列表失败",
+			logger.Err(err),
+			logger.Int64("用户ID", params.Uid),
+			logger.Int64("登录状态", params.Status),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return nil, 0, errs.ErrServer
 	}
 }
@@ -385,7 +483,11 @@ func (u *userRepository) ScanOneLog(ctx context.Context, id int64, val any) erro
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		return ErrAccountNotFound
 	} else {
-		logger.Error("查询登录日志失败", logger.Err(err))
+		logger.Error(
+			"查询登录日志失败",
+			logger.Err(err),
+			logger.Int64("日志ID", id),
+		)
 		return errs.ErrServer
 	}
 }
@@ -413,7 +515,12 @@ func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParam
 		if start, err := time.Parse(time.DateTime, params.Start); err == nil {
 			do = do.Where(field.CreatedAt.Gte(start))
 		} else {
-			logger.Error("扫描登录日志失败", logger.String("msg", "开始时间格式错误"), logger.Err(err))
+			logger.Error(
+				"扫描登录日志失败",
+				logger.Err(err),
+				logger.String("错误信息", "开始时间格式错误"),
+				logger.String("开始时间", params.Start),
+			)
 			return errs.ErrServer
 		}
 	}
@@ -421,7 +528,12 @@ func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParam
 		if end, err := time.Parse(time.DateTime, params.End); err == nil {
 			do = do.Where(field.CreatedAt.Lte(end))
 		} else {
-			logger.Error("扫描登录日志失败", logger.String("msg", "结束时间格式错误"), logger.Err(err))
+			logger.Error(
+				"扫描登录日志失败",
+				logger.Err(err),
+				logger.String("错误信息", "结束时间格式错误"),
+				logger.String("结束时间", params.End),
+			)
 			return errs.ErrServer
 		}
 	}
@@ -431,7 +543,14 @@ func (u *userRepository) ScanListLog(ctx context.Context, params *LoginListParam
 		*total = count
 		return nil
 	} else {
-		logger.Error("扫描登录日志列表失败", logger.Err(err))
+		logger.Error(
+			"扫描登录日志列表失败",
+			logger.Err(err),
+			logger.Int64("用户ID", params.Uid),
+			logger.Int64("登录状态", params.Status),
+			logger.Int("页码", params.Page),
+			logger.Int("每页数量", params.Size),
+		)
 		return errs.ErrServer
 	}
 }
