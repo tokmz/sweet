@@ -32,12 +32,16 @@ type MenuRepository interface {
 	Delete(ctx context.Context, ids []int64) error
 	// FindOne 查询菜单
 	FindOne(ctx context.Context, id int64) (*entity.Menu, error)
+
+	// 以下方法暂时未使用
 	// ScanOne 查询菜单
 	ScanOne(ctx context.Context, id int64, val any) error
 	// Tree 查询菜单树
 	Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error)
 	// RouteTree 查询路由树 根据角色ID
 	RouteTree(ctx context.Context, rid int64) ([]*RouteTree, int64, error)
+
+	// 以下方法暂时未使用
 	// ItemTree 查询Item菜单树 用于分配给角色
 	ItemTree(ctx context.Context, rid int64) ([]*ItemTree, int64, error)
 }

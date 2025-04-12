@@ -20,6 +20,7 @@ var (
 	ErrRoleCodeExists = errs.New(10105, "角色编码已存在")
 )
 
+// RoleRepository 角色仓储接口
 type RoleRepository interface {
 	// Create 创建角色
 	Create(ctx context.Context, role *entity.Role) error
@@ -31,6 +32,8 @@ type RoleRepository interface {
 	FindOne(ctx context.Context, id int64) (*entity.Role, error)
 	// FindList 查询角色列表
 	FindList(ctx context.Context, params *RoleListParams) (list []*entity.Role, total int64, err error)
+
+	// 以下方法暂时未使用
 	// ScanOne 查询角色
 	ScanOne(ctx context.Context, id int64, val any) error
 	// ScanList 查询角色列表
@@ -41,10 +44,12 @@ type RoleRepository interface {
 
 	// AssignMenus 给角色分配菜单
 	AssignMenus(ctx context.Context, roleID int64, menuIds []int64) error
-	// FindMenusTree 查询角色关联的菜单树
-	FindMenusTree(ctx context.Context, roleID int64) ([]*entity.Menu, error)
 	// FindMenusIds 查询角色关联菜单ids
 	FindMenusIds(ctx context.Context, roleID int64) ([]int64, error)
+
+	// 以下方法暂时未使用
+	// FindMenusTree 查询角色关联的菜单树
+	FindMenusTree(ctx context.Context, roleID int64) ([]*entity.Menu, error)
 }
 
 // RoleListParams 角色列表查询参数
