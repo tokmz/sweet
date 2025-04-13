@@ -147,7 +147,7 @@ func (m *menuService) Tree(ctx context.Context, req *dto.FindMenuTreeReq) ([]*en
 		logger.Int64("角色ID", utils.SafeInt64(req.RoleID)))
 
 	// 构建查询参数
-	params := &repo.TreeParams{
+	params := &dto.TreeParams{
 		Pid: utils.SafeInt64(req.ParentID),
 		Rid: utils.SafeInt64(req.RoleID),
 	}

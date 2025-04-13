@@ -7,6 +7,7 @@ import (
 	"sweet/pkg/logger"
 	"sweet/pkg/utils"
 
+	"sweet/internal/apps/system/types/dto"
 	"sweet/internal/apps/system/types/entity"
 	"sweet/internal/apps/system/types/query"
 	"sweet/internal/apps/system/types/vo"
@@ -37,20 +38,13 @@ type MenuRepository interface {
 	// ScanOne 扫描菜单
 	ScanOne(ctx context.Context, dest interface{}, id int64) error // 暂时未用
 	// 查询Tree结构的Menu 用于前端展示和选择
-	Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error)
+	Tree(ctx context.Context, params *dto.TreeParams) ([]*entity.Menu, int64, error)
 	// 查询RouteTree结构的Menu 用于前端路由
 	RouteTree(ctx context.Context, roleId int64) ([]*vo.RouteTree, int64, error)
 	// 查询ItemTree结构的Menu 用于角色分配菜单
 	ItemTree(ctx context.Context, roleId int64) ([]*vo.ItemTree, int64, error)
 	// 查询角色拥有的菜单IDs
 	FindMenusIds(ctx context.Context, roleId int64) ([]int64, error)
-}
-
-// TreeParams 路由树参数
-type TreeParams struct {
-	Pid  int64
-	Rid  int64
-	Name string
 }
 
 // 暂时未用
@@ -258,7 +252,7 @@ func (m *menuRepository) ScanOne(ctx context.Context, dest interface{}, id int64
 	return nil
 }
 
-func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error) {
+func (m *menuRepository) Tree(ctx context.Context, params *dto.TreeParams) ([]*entity.Menu, int64, error) {
 	// 构建查询条件
 	do := m.q.Menu.WithContext(ctx)
 	field := m.q.Menu

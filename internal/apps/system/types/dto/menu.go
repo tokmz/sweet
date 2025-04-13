@@ -66,3 +66,10 @@ type FindMenuTreeReq struct {
 type RouteTreeReq struct {
 	RoleID int64 `json:"role_id"` // 角色ID
 }
+
+// TreeParams 菜单树查询参数
+type TreeParams struct {
+	Pid  int64  `json:"pid"`  // 父菜单ID
+	Rid  int64  `json:"rid"`  // 角色ID
+	Name string `json:"name"` // 菜单名称
+}
