@@ -8,6 +8,7 @@ import (
 	"sweet/internal/apps/system/types/vo"
 	"sweet/internal/common"
 	"sweet/pkg/logger"
+	"sweet/pkg/utils"
 )
 
 type MenuService interface {
@@ -37,7 +38,7 @@ func (m *menuService) Create(ctx context.Context, req *dto.CreateMenuReq) error 
 	logger.Info("创建菜单",
 		logger.String("菜单名称", req.Name),
 		logger.Int64("菜单类型", req.Type),
-		logger.Int64("父ID", safeInt64Value(req.ParentID)))
+		logger.Int64("父ID", utils.SafeInt64(req.ParentID)))
 
 	// 构建菜单实体
 	menu := &entity.Menu{
@@ -81,7 +82,7 @@ func (m *menuService) Update(ctx context.Context, req *dto.UpdateMenuReq) error 
 		logger.Int64("菜单ID", req.ID),
 		logger.String("菜单名称", req.Name),
 		logger.Int64("菜单类型", req.Type),
-		logger.Int64("父ID", safeInt64Value(req.ParentID)))
+		logger.Int64("父ID", utils.SafeInt64(req.ParentID)))
 
 	// 构建菜单实体
 	menu := &entity.Menu{
@@ -141,14 +142,14 @@ func (m *menuService) FindOne(ctx context.Context, req *common.IDReq) (*entity.M
 // Tree 查询菜单树
 func (m *menuService) Tree(ctx context.Context, req *dto.FindMenuTreeReq) ([]*entity.Menu, int64, error) {
 	logger.Info("查询菜单树",
-		logger.Int64("父菜单ID", safeInt64Value(req.ParentID)),
-		logger.String("菜单名称", safeStringValue(req.Name)),
-		logger.Int64("角色ID", safeInt64Value(req.RoleID)))
+		logger.Int64("父菜单ID", utils.SafeInt64(req.ParentID)),
+		logger.String("菜单名称", utils.SafeString(req.Name)),
+		logger.Int64("角色ID", utils.SafeInt64(req.RoleID)))
 
 	// 构建查询参数
 	params := &repo.TreeParams{
-		Pid: safeInt64Value(req.ParentID),
-		Rid: safeInt64Value(req.RoleID),
+		Pid: utils.SafeInt64(req.ParentID),
+		Rid: utils.SafeInt64(req.RoleID),
 	}
 
 	if req.Name != nil {
@@ -180,20 +181,4 @@ func NewMenuService(menuRepo repo.MenuRepository) MenuService {
 	return &menuService{
 		menuRepo: menuRepo,
 	}
-}
-
-// 辅助函数：安全获取int64指针值
-func safeInt64Value(val *int64) int64 {
-	if val == nil {
-		return 0
-	}
-	return *val
-}
-
-// 辅助函数：安全获取string指针值
-func safeStringValue(val *string) string {
-	if val == nil {
-		return ""
-	}
-	return *val
 }
