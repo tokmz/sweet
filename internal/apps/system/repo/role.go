@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	ErrRoleNotFound   = errs.New(10101, "角色不存在")
-	ErrRoleExists     = errs.New(10102, "角色已存在")
-	ErrRoleHasUsers   = errs.New(10103, "角色下存在用户，无法删除")
-	ErrRoleCodeExists = errs.New(10105, "角色编码已存在")
+	ErrRoleNotFound   = errs.New(2001, "角色不存在")
+	ErrRoleNameExists = errs.New(2002, "角色名称已存在")
+	ErrRoleHasUsers   = errs.New(2003, "角色下存在用户，无法删除")
+	ErrInvalidRoleID  = errs.New(2004, "无效角色ID")
+	ErrRoleCodeExists = errs.New(2005, "角色编码已存在")
 )
 
 // RoleRepository 角色仓储接口
@@ -77,7 +78,7 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 			Or(field.Code.Eq(role.Code)).
 			First(); err == nil {
 			if info.Name == role.Name {
-				return ErrRoleExists
+				return ErrRoleNameExists
 			} else if info.Code == role.Code {
 				return ErrRoleCodeExists
 			}
@@ -127,7 +128,7 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) error {
 		// 检查角色名称是否重复
 		if role.Name != "" {
 			if _, err := do.Where(field.ID.Neq(role.ID), field.Name.Eq(role.Name)).First(); err == nil {
-				return ErrRoleExists
+				return ErrRoleNameExists
 			} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				logger.Error(
 					"检查角色名称唯一性失败",

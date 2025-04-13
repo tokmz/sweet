@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	ErrAccountNotFound = errs.New(10001, "账号不存在")
-	ErrAccountExists   = errs.New(10002, "账号已存在")
-	ErrEmailExists     = errs.New(10003, "邮箱已存在")
-	ErrMobileExists    = errs.New(10004, "手机号已存在")
-	ErrInvalidPassword = errs.New(10005, "密码错误")
-	ErrInvalidUserID   = errs.New(10006, "无效ID")
+	ErrUserNotFound     = errs.New(1001, "用户不存在")
+	ErrUserNameExists   = errs.New(1002, "用户名已存在")
+	ErrUserEmailExists  = errs.New(1003, "邮箱已存在")
+	ErrUserMobileExists = errs.New(1004, "手机号已存在")
+	ErrInvalidPassword  = errs.New(1005, "密码错误")
+	ErrInvalidUserID    = errs.New(1006, "无效用户ID")
 )
 
 // UserRepository 用户仓储接口
@@ -108,11 +108,11 @@ func (u *userRepository) Create(ctx context.Context, user *entity.User) error {
 			Or(field.Email.Eq(*user.Email)).
 			First(); err == nil {
 			if info.Username == user.Username {
-				return ErrAccountExists
+				return ErrUserNameExists
 			} else if info.Mobile == user.Mobile {
-				return ErrMobileExists
+				return ErrUserMobileExists
 			} else if info.Email == user.Email {
-				return ErrEmailExists
+				return ErrUserEmailExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Error(
@@ -148,11 +148,11 @@ func (u *userRepository) Update(ctx context.Context, user *entity.User) error {
 			Or(field.Email.Eq(*user.Email)).
 			First(); err == nil {
 			if info.Username == user.Username {
-				return ErrAccountExists
+				return ErrUserNameExists
 			} else if info.Mobile == user.Mobile {
-				return ErrMobileExists
+				return ErrUserMobileExists
 			} else if info.Email == user.Email {
-				return ErrEmailExists
+				return ErrUserEmailExists
 			}
 		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Error(
@@ -202,7 +202,7 @@ func (u *userRepository) FindOne(ctx context.Context, id int64) (*entity.User, e
 	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.ID.Eq(id)).First(); err == nil {
 		return info, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAccountNotFound
+		return nil, ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -217,7 +217,7 @@ func (u *userRepository) FindOneByUsername(ctx context.Context, username string)
 	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Username.Eq(username)).First(); err == nil {
 		return info, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAccountNotFound
+		return nil, ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -232,7 +232,7 @@ func (u *userRepository) FindOneByEmail(ctx context.Context, email string) (*ent
 	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Email.Eq(email)).First(); err == nil {
 		return info, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAccountNotFound
+		return nil, ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -247,7 +247,7 @@ func (u *userRepository) FindOneByMobile(ctx context.Context, mobile string) (*e
 	if info, err := u.q.User.WithContext(ctx).Where(u.q.User.Mobile.Eq(mobile)).First(); err == nil {
 		return info, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAccountNotFound
+		return nil, ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -306,7 +306,7 @@ func (u *userRepository) ScanOne(ctx context.Context, id int64, val any) error {
 	if err := u.q.User.WithContext(ctx).Where(u.q.User.ID.Eq(id)).Scan(val); err == nil {
 		return nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrAccountNotFound
+		return ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -321,7 +321,7 @@ func (u *userRepository) ScanOneByUsername(ctx context.Context, username string,
 	if err := u.q.User.WithContext(ctx).Where(u.q.User.Username.Eq(username)).Scan(val); err == nil {
 		return nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrAccountNotFound
+		return ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -336,7 +336,7 @@ func (u *userRepository) ScanOneByEmail(ctx context.Context, email string, val a
 	if err := u.q.User.WithContext(ctx).Where(u.q.User.Email.Eq(email)).Scan(val); err == nil {
 		return nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrAccountNotFound
+		return ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -351,7 +351,7 @@ func (u *userRepository) ScanOneByMobile(ctx context.Context, mobile string, val
 	if err := u.q.User.WithContext(ctx).Where(u.q.User.Mobile.Eq(mobile)).Scan(val); err == nil {
 		return nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrAccountNotFound
+		return ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询用户失败",
@@ -410,7 +410,7 @@ func (u *userRepository) FindOneLog(ctx context.Context, id int64) (*entity.Logi
 	if info, err := u.q.LoginLog.WithContext(ctx).Where(u.q.LoginLog.ID.Eq(id)).First(); err == nil {
 		return info, nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAccountNotFound
+		return nil, ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询登录日志失败",
@@ -481,7 +481,7 @@ func (u *userRepository) ScanOneLog(ctx context.Context, id int64, val any) erro
 	if err := u.q.LoginLog.WithContext(ctx).Where(u.q.LoginLog.ID.Eq(id)).Scan(val); err == nil {
 		return nil
 	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrAccountNotFound
+		return ErrUserNotFound
 	} else {
 		logger.Error(
 			"查询登录日志失败",
