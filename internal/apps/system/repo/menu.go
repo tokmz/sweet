@@ -9,6 +9,7 @@ import (
 
 	"sweet/internal/apps/system/types/entity"
 	"sweet/internal/apps/system/types/query"
+	"sweet/internal/apps/system/types/vo"
 
 	"slices"
 
@@ -23,6 +24,7 @@ var (
 	ErrMenuPathExists       = errs.New(10305, "路由路径已存在")
 )
 
+// MenuRepository 菜单仓储接口
 type MenuRepository interface {
 	// Create 创建菜单
 	Create(ctx context.Context, menu *entity.Menu) error
@@ -32,63 +34,31 @@ type MenuRepository interface {
 	Delete(ctx context.Context, ids []int64) error
 	// FindOne 查询菜单
 	FindOne(ctx context.Context, id int64) (*entity.Menu, error)
-
-	// 以下方法暂时未使用
-	// ScanOne 查询菜单
-	ScanOne(ctx context.Context, id int64, val any) error
-	// Tree 查询菜单树
+	// ScanOne 扫描菜单
+	ScanOne(ctx context.Context, dest interface{}, id int64) error // 暂时未用
+	// 查询Tree结构的Menu 用于前端展示和选择
 	Tree(ctx context.Context, params *TreeParams) ([]*entity.Menu, int64, error)
-	// RouteTree 查询路由树 根据角色ID
-	RouteTree(ctx context.Context, rid int64) ([]*RouteTree, int64, error)
-
-	// 以下方法暂时未使用
-	// ItemTree 查询Item菜单树 用于分配给角色
-	ItemTree(ctx context.Context, rid int64) ([]*ItemTree, int64, error)
+	// 查询RouteTree结构的Menu 用于前端路由
+	RouteTree(ctx context.Context, roleId int64) ([]*vo.RouteTree, int64, error)
+	// 查询ItemTree结构的Menu 用于角色分配菜单
+	ItemTree(ctx context.Context, roleId int64) ([]*vo.ItemTree, int64, error)
+	// 查询角色拥有的菜单IDs
+	FindMenusIds(ctx context.Context, roleId int64) ([]int64, error)
 }
 
-// TreeParams 菜单列表查询参数
+// TreeParams 路由树参数
 type TreeParams struct {
-	Rid  int64  // 角色ID 获取角色的菜单树
-	Pid  int64  // 父菜单ID 获取此ID和子菜单
-	Name string // 菜单名称 模糊查询 同时获取子菜单内容
+	Pid  int64
+	Rid  int64
+	Name string
 }
 
-// RouteTree 路由树结构
-type RouteTree struct {
-	ID        int64        `json:"id"`        // 菜单ID
-	ParentID  int64        `json:"parentId"`  // 父菜单ID
-	Name      string       `json:"name"`      // 路由名称
-	Path      string       `json:"path"`      // 路由地址
-	Component string       `json:"component"` // 组件路径
-	Redirect  string       `json:"redirect"`  // 重定向地址
-	Meta      RouteMeta    `json:"meta"`      // 路由元信息
-	Children  []*RouteTree `json:"children"`  // 子路由
-}
-
-// RouteMeta 路由元信息
-type RouteMeta struct {
-	Title        string `json:"title"`        // 菜单标题
-	Icon         string `json:"icon"`         // 菜单图标
-	Hidden       bool   `json:"hidden"`       // 是否隐藏
-	KeepAlive    bool   `json:"keepAlive"`    // 是否缓存
-	AlwaysShow   bool   `json:"alwaysShow"`   // 是否总是显示
-	Target       string `json:"target"`       // 打开方式
-	ActiveMenu   string `json:"activeMenu"`   // 激活菜单
-	Breadcrumb   bool   `json:"breadcrumb"`   // 是否显示面包屑
-	Affix        bool   `json:"affix"`        // 是否固定
-	FrameSrc     string `json:"frameSrc"`     // iframe地址
-	FrameLoading bool   `json:"frameLoading"` // iframe加载状态
-	Transition   string `json:"transition"`   // 过渡动画
-	Permission   string `json:"permission"`   // 权限标识
-}
-
-// ItemTree 菜单树结构(用于前端分配权限)
-type ItemTree struct {
-	ID       int64       `json:"id"`       // ID
-	Name     string      `json:"name"`     // 名称
-	Checked  bool        `json:"checked"`  // 是否选中
-	Children []*ItemTree `json:"children"` // 子节点
-}
+// 暂时未用
+// FindMenusTreeParams 路由树参数
+// type FindMenusTreeParams struct {
+// 	ID   int64
+// 	Pids []int64
+// }
 
 // menuRepository 菜单仓储实现
 type menuRepository struct {
@@ -277,8 +247,8 @@ func (m *menuRepository) FindOne(ctx context.Context, id int64) (*entity.Menu, e
 	return menu, nil
 }
 
-func (m *menuRepository) ScanOne(ctx context.Context, id int64, val any) error {
-	if err := m.q.Menu.WithContext(ctx).Where(m.q.Menu.ID.Eq(id)).Scan(val); err != nil {
+func (m *menuRepository) ScanOne(ctx context.Context, dest interface{}, id int64) error {
+	if err := m.q.Menu.WithContext(ctx).Where(m.q.Menu.ID.Eq(id)).Scan(dest); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrMenuNotFound
 		}
@@ -417,7 +387,7 @@ func (m *menuRepository) Tree(ctx context.Context, params *TreeParams) ([]*entit
 	return rootMenus, int64(len(rootMenus)), nil
 }
 
-func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*RouteTree, int64, error) {
+func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*vo.RouteTree, int64, error) {
 	// 构建查询条件
 	menuQ := m.q.Menu
 	roleMenuQ := m.q.RoleMenu
@@ -462,7 +432,7 @@ func (m *menuRepository) RouteTree(ctx context.Context, rid int64) ([]*RouteTree
 	return routeTree, int64(len(routeTree)), nil
 }
 
-func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, int64, error) {
+func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*vo.ItemTree, int64, error) {
 	// 查询所有菜单
 	menus, err := m.q.Menu.WithContext(ctx).Order(m.q.Menu.Sort).Find()
 	if err != nil {
@@ -499,19 +469,19 @@ func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, 
 	}
 
 	// 构建ItemTree
-	itemMap := make(map[int64]*ItemTree)
-	var rootItems []*ItemTree
+	itemMap := make(map[int64]*vo.ItemTree)
+	var rootItems []*vo.ItemTree
 
 	// 第一步：创建所有节点
 	for _, menu := range menus {
 		// 检查菜单是否被选中
 		checked := slices.Contains(roleMenuIDs, menu.ID)
 
-		item := &ItemTree{
+		item := &vo.ItemTree{
 			ID:       menu.ID,
 			Name:     menu.Name,
 			Checked:  checked,
-			Children: make([]*ItemTree, 0),
+			Children: make([]*vo.ItemTree, 0),
 		}
 		itemMap[menu.ID] = item
 	}
@@ -542,6 +512,27 @@ func (m *menuRepository) ItemTree(ctx context.Context, rid int64) ([]*ItemTree, 
 	return rootItems, int64(len(rootItems)), nil
 }
 
+// FindMenusIds 查询角色拥有的菜单IDs
+func (m *menuRepository) FindMenusIds(ctx context.Context, roleId int64) ([]int64, error) {
+	if roleId <= 0 {
+		return []int64{}, nil
+	}
+
+	// 查询角色-菜单关联表，获取角色拥有的所有菜单ID
+	roleMenus, err := m.q.RoleMenu.WithContext(ctx).Where(m.q.RoleMenu.RoleID.Eq(roleId)).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	// 提取菜单IDs
+	menuIDs := make([]int64, 0, len(roleMenus))
+	for _, rm := range roleMenus {
+		menuIDs = append(menuIDs, rm.MenuID)
+	}
+
+	return menuIDs, nil
+}
+
 // NewMenuRepository 创建菜单仓储
 func NewMenuRepository(db *gorm.DB) MenuRepository {
 	return &menuRepository{
@@ -551,15 +542,15 @@ func NewMenuRepository(db *gorm.DB) MenuRepository {
 }
 
 // buildRouteTree 构建路由树
-func buildRouteTree(menus []*entity.Menu) []*RouteTree {
+func buildRouteTree(menus []*entity.Menu) []*vo.RouteTree {
 	// 创建菜单ID到路由树的映射
-	menuMap := make(map[int64]*RouteTree)
+	menuMap := make(map[int64]*vo.RouteTree)
 	// 存储根节点
-	var rootNodes []*RouteTree
+	var rootNodes []*vo.RouteTree
 
 	// 第一遍遍历：创建所有节点
 	for _, menu := range menus {
-		route := &RouteTree{
+		route := &vo.RouteTree{
 			ID:        menu.ID,
 			ParentID:  utils.SafeInt64(menu.ParentID),
 			Name:      menu.Name,
@@ -567,7 +558,7 @@ func buildRouteTree(menus []*entity.Menu) []*RouteTree {
 			Component: utils.SafeString(menu.Component),
 			Redirect:  utils.SafeString(menu.Redirect),
 			Meta:      buildRouteMeta(menu),
-			Children:  make([]*RouteTree, 0),
+			Children:  make([]*vo.RouteTree, 0),
 		}
 		menuMap[menu.ID] = route
 	}
@@ -590,8 +581,8 @@ func buildRouteTree(menus []*entity.Menu) []*RouteTree {
 }
 
 // buildRouteMeta 构建路由元信息
-func buildRouteMeta(menu *entity.Menu) RouteMeta {
-	return RouteMeta{
+func buildRouteMeta(menu *entity.Menu) vo.RouteMeta {
+	return vo.RouteMeta{
 		Title:        menu.Name,
 		Icon:         utils.SafeString(menu.Icon),
 		Hidden:       utils.SafeBoolFromInt64(menu.Hidden),
