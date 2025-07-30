@@ -1,0 +1,113 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Configuration files with sensitive data
+config/local.yaml
+config/local.json
+config/production.yaml
+config/production.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+cache/
+tmp/
+temp/
+
+# Build artifacts
+build/
+dist/
+bin/
+
+# Docker files
+.dockerignore
+
+# Coverage reports
+coverage.txt
+coverage.html
+coverage.out
+
+# Profiling data
+*.prof
+
+# Air live reload
+tmp/
+
+# Local development files
+*.local
+
+# Backup files
+*.bak
+*.backup
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.p12
+
+# Documentation build
+docs/_build/
+
+# Node.js (if using for frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build files
+public/dist/
+static/dist/
+
+# Sweet specific
+# Add any Sweet project specific files to ignore
+resource/uploads/
+resource/temp/
+resource/cache/

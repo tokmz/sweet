@@ -1,0 +1,300 @@
+{
+  "app": {
+    "name": "Sweets Application",
+    "version": "1.0.0",
+    "environment": "development",
+    "debug": true,
+    "timezone": "Asia/Shanghai"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "read_timeout": "30s",
+    "write_timeout": "30s",
+    "idle_timeout": "60s",
+    "max_header_bytes": 1048576,
+    "tls": {
+      "enabled": false,
+      "cert_file": "",
+      "key_file": ""
+    }
+  },
+  "database": {
+    "driver": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "password",
+    "database": "sweets",
+    "charset": "utf8mb4",
+    "parse_time": true,
+    "loc": "Local",
+    "pool": {
+      "max_open_conns": 100,
+      "max_idle_conns": 10,
+      "conn_max_lifetime": "1h",
+      "conn_max_idle_time": "30m"
+    }
+  },
+  "redis": {
+    "mode": "single",
+    "single": {
+      "addr": "localhost:6379",
+      "password": "",
+      "db": 0
+    },
+    "cluster": {
+      "addrs": [
+        "localhost:7000",
+        "localhost:7001",
+        "localhost:7002"
+      ],
+      "password": ""
+    },
+    "sentinel": {
+      "master_name": "mymaster",
+      "addrs": [
+        "localhost:26379",
+        "localhost:26380",
+        "localhost:26381"
+      ],
+      "password": "",
+      "sentinel_password": ""
+    },
+    "pool_size": 10,
+    "min_idle_conns": 5,
+    "dial_timeout": "5s",
+    "read_timeout": "3s",
+    "write_timeout": "3s",
+    "pool_timeout": "4s",
+    "idle_timeout": "5m",
+    "idle_check_frequency": "1m"
+  },
+  "logger": {
+    "level": "info",
+    "format": "json",
+    "output": "stdout",
+    "file": {
+      "path": "./logs/app.log",
+      "max_size": 100,
+      "max_backups": 10,
+      "max_age": 30,
+      "compress": true
+    },
+    "caller": true,
+    "stacktrace": true,
+    "sampling": {
+      "initial": 100,
+      "thereafter": 100
+    }
+  },
+  "auth": {
+    "jwt": {
+      "secret": "your-secret-key",
+      "issuer": "sweets-app",
+      "access_token_expire": "15m",
+      "refresh_token_expire": "7d"
+    },
+    "oauth": {
+      "providers": {
+        "google": {
+          "client_id": "your-google-client-id",
+          "client_secret": "your-google-client-secret",
+          "redirect_url": "http://localhost:8080/auth/google/callback"
+        },
+        "github": {
+          "client_id": "your-github-client-id",
+          "client_secret": "your-github-client-secret",
+          "redirect_url": "http://localhost:8080/auth/github/callback"
+        }
+      }
+    }
+  },
+  "cache": {
+    "default_expiration": "1h",
+    "cleanup_interval": "10m",
+    "layers": {
+      "l1": {
+        "type": "memory",
+        "size": 1000,
+        "ttl": "5m"
+      },
+      "l2": {
+        "type": "redis",
+        "ttl": "1h"
+      }
+    }
+  },
+  "message_queue": {
+    "provider": "redis",
+    "redis": {
+      "stream_name": "sweets:events",
+      "consumer_group": "sweets-workers",
+      "consumer_name": "worker-1",
+      "max_len": 10000
+    },
+    "rabbitmq": {
+      "url": "amqp://guest:guest@localhost:5672/",
+      "exchange": "sweets",
+      "queue": "events",
+      "routing_key": "events"
+    },
+    "kafka": {
+      "brokers": [
+        "localhost:9092"
+      ],
+      "topic": "sweets-events",
+      "group_id": "sweets-consumers"
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "path": "/metrics",
+      "namespace": "sweets"
+    },
+    "tracing": {
+      "enabled": true,
+      "jaeger": {
+        "endpoint": "http://localhost:14268/api/traces",
+        "service_name": "sweets-app",
+        "sampler_type": "const",
+        "sampler_param": 1
+      }
+    },
+    "health": {
+      "enabled": true,
+      "path": "/health",
+      "checks": [
+        "database",
+        "redis",
+        "external_api"
+      ]
+    }
+  },
+  "external_services": {
+    "payment": {
+      "provider": "stripe",
+      "api_key": "sk_test_...",
+      "webhook_secret": "whsec_...",
+      "timeout": "30s"
+    },
+    "email": {
+      "provider": "smtp",
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "username": "your-email@gmail.com",
+        "password": "your-app-password",
+        "from": "noreply@sweets.com"
+      }
+    },
+    "sms": {
+      "provider": "twilio",
+      "account_sid": "your-account-sid",
+      "auth_token": "your-auth-token",
+      "from": "+1234567890"
+    }
+  },
+  "storage": {
+    "provider": "local",
+    "local": {
+      "base_path": "./uploads",
+      "max_file_size": "10MB",
+      "allowed_extensions": [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".pdf"
+      ]
+    },
+    "s3": {
+      "region": "us-west-2",
+      "bucket": "sweets-uploads",
+      "access_key": "your-access-key",
+      "secret_key": "your-secret-key",
+      "endpoint": ""
+    },
+    "oss": {
+      "region": "oss-cn-hangzhou",
+      "bucket": "sweets-uploads",
+      "access_key": "your-access-key",
+      "secret_key": "your-secret-key",
+      "endpoint": "https://oss-cn-hangzhou.aliyuncs.com"
+    }
+  },
+  "rate_limit": {
+    "enabled": true,
+    "global": {
+      "requests_per_second": 1000,
+      "burst": 2000
+    },
+    "api": {
+      "requests_per_minute": 60,
+      "burst": 100
+    },
+    "user": {
+      "requests_per_minute": 30,
+      "burst": 50
+    }
+  },
+  "security": {
+    "cors": {
+      "enabled": true,
+      "allowed_origins": [
+        "http://localhost:3000",
+        "https://sweets.com"
+      ],
+      "allowed_methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+      ],
+      "allowed_headers": [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With"
+      ],
+      "max_age": 86400
+    },
+    "csrf": {
+      "enabled": true,
+      "secret": "your-csrf-secret",
+      "cookie_name": "_csrf",
+      "header_name": "X-CSRF-Token"
+    },
+    "encryption": {
+      "key": "your-32-byte-encryption-key-here",
+      "algorithm": "AES-256-GCM"
+    }
+  },
+  "feature_flags": {
+    "new_ui": true,
+    "payment_v2": false,
+    "recommendation_engine": true,
+    "social_login": true,
+    "mobile_app_api": false
+  },
+  "business": {
+    "order": {
+      "auto_confirm_minutes": 30,
+      "auto_cancel_hours": 24,
+      "refund_days": 7
+    },
+    "user": {
+      "max_login_attempts": 5,
+      "lockout_duration": "30m",
+      "password_min_length": 8,
+      "session_timeout": "24h"
+    },
+    "product": {
+      "max_images": 10,
+      "image_max_size": "5MB",
+      "auto_publish": false,
+      "review_required": true
+    }
+  }
+}
