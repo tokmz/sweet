@@ -354,110 +354,22 @@ CREATE TABLE `sw_sys_file` (
   `file_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件类型/MIME类型',
   `file_ext` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件扩展名',
   `md5` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件MD5值',
-  `sha1` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '文件SHA1值',
-  `storage_type` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '存储类型：1=本地存储，2=阿里云OSS，3=腾讯云COS，4=七牛云，5=AWS S3',
-  `bucket_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '存储桶名称',
-  `object_key` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '对象存储Key',
-  `is_public` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '是否公开访问：1=公开，2=私有',
-  `ref_count` int unsigned NOT NULL DEFAULT '1' COMMENT '引用计数',
+  `storage_type` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '存储类型：1=本地存储，2=阿里云OSS',
   `upload_user_id` bigint unsigned DEFAULT NULL COMMENT '上传用户ID',
   `business_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '业务类型',
   `business_id` bigint unsigned DEFAULT NULL COMMENT '业务ID',
-  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '状态：1=正常，2=删除中，3=已删除',
-  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
+  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '状态：1=正常，2=已删除',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_md5_size` (`md5`, `file_size`),
   KEY `idx_file_type` (`file_type`),
-  KEY `idx_storage_type` (`storage_type`),
   KEY `idx_upload_user` (`upload_user_id`),
   KEY `idx_business` (`business_type`, `business_id`),
   KEY `idx_status` (`status`),
-  KEY `idx_created_at` (`created_at`),
-  KEY `idx_ref_count` (`ref_count`),
   KEY `idx_deleted_at` (`deleted_at`),
   CONSTRAINT `fk_file_upload_user` FOREIGN KEY (`upload_user_id`) REFERENCES `sw_sys_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统文件表';
-
--- ----------------------------
--- Table structure for sw_sys_file_chunk
--- ----------------------------
-DROP TABLE IF EXISTS `sw_sys_file_chunk`;
-CREATE TABLE `sw_sys_file_chunk` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '分片ID',
-  `upload_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '上传任务ID',
-  `file_md5` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件MD5',
-  `chunk_number` int unsigned NOT NULL COMMENT '分片序号',
-  `chunk_size` bigint unsigned NOT NULL COMMENT '分片大小',
-  `chunk_md5` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分片MD5',
-  `chunk_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分片存储路径',
-  `etag` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'OSS返回的ETag',
-  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '状态：1=上传中，2=已完成，3=已失败',
-  `upload_user_id` bigint unsigned DEFAULT NULL COMMENT '上传用户ID',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_upload_chunk` (`upload_id`, `chunk_number`),
-  KEY `idx_file_md5` (`file_md5`),
-  KEY `idx_status` (`status`),
-  KEY `idx_upload_user` (`upload_user_id`),
-  KEY `idx_created_at` (`created_at`),
-  CONSTRAINT `fk_chunk_upload_user` FOREIGN KEY (`upload_user_id`) REFERENCES `sw_sys_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文件分片上传表';
-
--- ----------------------------
--- Table structure for sw_sys_oss_config
--- ----------------------------
-DROP TABLE IF EXISTS `sw_sys_oss_config`;
-CREATE TABLE `sw_sys_oss_config` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '配置ID',
-  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '配置名称',
-  `storage_type` tinyint unsigned NOT NULL COMMENT '存储类型：1=本地存储，2=阿里云OSS，3=腾讯云COS，4=七牛云，5=AWS S3',
-  `access_key` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '访问密钥',
-  `secret_key` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '秘密密钥',
-  `bucket_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '存储桶名称',
-  `endpoint` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '服务端点',
-  `region` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '区域',
-  `domain` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '自定义域名',
-  `path_prefix` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '路径前缀',
-  `is_https` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '是否HTTPS：1=是，2=否',
-  `is_default` tinyint unsigned NOT NULL DEFAULT '2' COMMENT '是否默认配置：1=是，2=否',
-  `status` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '状态：1=启用，2=禁用',
-  `max_file_size` bigint unsigned DEFAULT NULL COMMENT '最大文件大小（字节）',
-  `allowed_types` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '允许的文件类型（JSON数组）',
-  `config_data` json DEFAULT NULL COMMENT '扩展配置数据',
-  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '备注',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_name` (`name`),
-  KEY `idx_storage_type` (`storage_type`),
-  KEY `idx_is_default` (`is_default`),
-  KEY `idx_status` (`status`),
-  KEY `idx_deleted_at` (`deleted_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='OSS存储配置表';
-
--- ----------------------------
--- Table structure for sw_sys_file_ref
--- ----------------------------
-DROP TABLE IF EXISTS `sw_sys_file_ref`;
-CREATE TABLE `sw_sys_file_ref` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '引用ID',
-  `file_id` bigint unsigned NOT NULL COMMENT '文件ID',
-  `business_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '业务类型',
-  `business_id` bigint unsigned NOT NULL COMMENT '业务ID',
-  `ref_field` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '引用字段',
-  `sort_order` int unsigned DEFAULT '0' COMMENT '排序',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_business_file` (`business_type`, `business_id`, `file_id`, `ref_field`),
-  KEY `idx_file_id` (`file_id`),
-  KEY `idx_business` (`business_type`, `business_id`),
-  KEY `idx_created_at` (`created_at`),
-  CONSTRAINT `fk_file_ref_file` FOREIGN KEY (`file_id`) REFERENCES `sw_sys_file` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文件引用关系表';
 
 SET FOREIGN_KEY_CHECKS = 1;

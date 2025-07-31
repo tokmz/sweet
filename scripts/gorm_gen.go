@@ -156,9 +156,6 @@ func (g *Generator) SetupModelRelations() {
 	operationLogTable := "sw_sys_operation_log"
 	// 文件管理相关表
 	fileTable := "sw_sys_file"
-	fileChunkTable := "sw_sys_file_chunk"
-	ossConfigTable := "sw_sys_oss_config"
-	fileRefTable := "sw_sys_file_ref"
 
 	// 生成带关联的模型
 	user := g.Gen.GenerateModel(userTable)
@@ -170,9 +167,6 @@ func (g *Generator) SetupModelRelations() {
 	post := g.Gen.GenerateModel(postTable)
 	// 文件管理相关模型
 	file := g.Gen.GenerateModel(fileTable)
-	fileChunk := g.Gen.GenerateModel(fileChunkTable)
-	ossConfig := g.Gen.GenerateModel(ossConfigTable)
-	fileRef := g.Gen.GenerateModel(fileRefTable)
 
 	// 设置系统用户表的关联
 	userOpts := []gen.ModelOpt{
@@ -385,45 +379,6 @@ func (g *Generator) SetupModelRelations() {
 			},
 			JSONTag: "upload_user",
 		}),
-		// 文件与文件引用的一对多关系
-		gen.FieldRelate(field.HasMany, "FileRefs", fileRef, &field.RelateConfig{
-			GORMTag: map[string][]string{
-				"foreignKey": {"FileID"},
-				"references": {"ID"},
-			},
-			JSONTag: "file_refs",
-		}),
-	}
-
-	// 设置文件分片表的选项
-	fileChunkOpts := []gen.ModelOpt{
-		// 文件分片与上传用户的多对一关系
-		gen.FieldRelate(field.BelongsTo, "UploadUser", user, &field.RelateConfig{
-			RelatePointer: true,
-			GORMTag: map[string][]string{
-				"foreignKey": {"UploadUserID"},
-				"references": {"ID"},
-			},
-			JSONTag: "upload_user",
-		}),
-	}
-
-	// 设置OSS配置表的选项
-	ossConfigOpts := []gen.ModelOpt{
-		softDeleteField,
-	}
-
-	// 设置文件引用表的选项
-	fileRefOpts := []gen.ModelOpt{
-		// 文件引用与文件的多对一关系
-		gen.FieldRelate(field.BelongsTo, "File", file, &field.RelateConfig{
-			RelatePointer: true,
-			GORMTag: map[string][]string{
-				"foreignKey": {"FileID"},
-				"references": {"ID"},
-			},
-			JSONTag: "file",
-		}),
 	}
 
 	// 重新生成带关联的模型
@@ -441,12 +396,9 @@ func (g *Generator) SetupModelRelations() {
 	operationLog := g.Gen.GenerateModel(operationLogTable, operationLogOpts...)
 	// 文件管理相关模型
 	file = g.Gen.GenerateModel(fileTable, fileOpts...)
-	fileChunk = g.Gen.GenerateModel(fileChunkTable, fileChunkOpts...)
-	ossConfig = g.Gen.GenerateModel(ossConfigTable, ossConfigOpts...)
-	fileRef = g.Gen.GenerateModel(fileRefTable, fileRefOpts...)
 
 	// 应用基本模型
-	g.Gen.ApplyBasic(user, role, menu, menuConfig, roleMenu, apiGroup, api, roleApi, dept, post, loginLog, operationLog, file, fileChunk, ossConfig, fileRef)
+	g.Gen.ApplyBasic(user, role, menu, menuConfig, roleMenu, apiGroup, api, roleApi, dept, post, loginLog, operationLog, file)
 }
 
 // GenerateModelsWithRelations 生成带关联关系的模型
