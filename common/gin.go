@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"net/http"
 	"sweet/internal/models"
 	"sweet/pkg/auth"
@@ -69,12 +70,9 @@ func (g *ginUtils) BindUri(ctx *gin.Context, obj interface{}) error {
 func (g *ginUtils) Res(ctx *gin.Context, err error, data ...any) {
 	if err != nil {
 		// 判断err 类型
-		if e, ok := err.(*errs.Error); ok {
+		var e *errs.Error
+		if errors.As(err, &e) {
 			ctx.JSON(http.StatusOK, models.NewResponse(e.Code, e.Msg, nil))
-			return
-		} else {
-			g.l.Error("Res error", zap.Error(err))
-			ctx.JSON(http.StatusOK, models.NewResponse(errs.ErrServer.Code, errs.ErrServer.Msg, nil))
 			return
 		}
 	}
