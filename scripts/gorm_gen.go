@@ -162,12 +162,9 @@ func (g *Generator) SetupModelRelations() {
 	role := g.Gen.GenerateModel(roleTable)
 	menu := g.Gen.GenerateModel(menuTable)
 	menuConfig := g.Gen.GenerateModel(menuConfigTable)
-	apiGroup := g.Gen.GenerateModel(apiGroupTable)
 	api := g.Gen.GenerateModel(apiTable)
 	dept := g.Gen.GenerateModel(deptTable)
 	post := g.Gen.GenerateModel(postTable)
-	// 文件管理相关模型
-	file := g.Gen.GenerateModel(fileTable)
 
 	// 设置系统用户表的关联
 	userOpts := []gen.ModelOpt{
@@ -397,7 +394,7 @@ func (g *Generator) SetupModelRelations() {
 	menu = g.Gen.GenerateModel(menuTable, menuOpts...)
 	menuConfig = g.Gen.GenerateModel(menuConfigTable, menuConfigOpts...)
 	roleMenu := g.Gen.GenerateModel(roleMenuTable, roleMenuOpts...)
-	apiGroup = g.Gen.GenerateModel(apiGroupTable, apiGroupOpts...)
+	apiGroup := g.Gen.GenerateModel(apiGroupTable, apiGroupOpts...)
 	api = g.Gen.GenerateModel(apiTable, apiOpts...)
 	roleApi := g.Gen.GenerateModel(roleApiTable, roleApiOpts...)
 	dept = g.Gen.GenerateModel(deptTable, deptOpts...)
@@ -405,7 +402,7 @@ func (g *Generator) SetupModelRelations() {
 	loginLog := g.Gen.GenerateModel(loginLogTable, loginLogOpts...)
 	operationLog := g.Gen.GenerateModel(operationLogTable, operationLogOpts...)
 	// 文件管理相关模型
-	file = g.Gen.GenerateModel(fileTable, fileOpts...)
+	file := g.Gen.GenerateModel(fileTable, fileOpts...)
 
 	// 应用基本模型
 	g.Gen.ApplyBasic(user, role, menu, menuConfig, roleMenu, apiGroup, api, roleApi, dept, post, loginLog, operationLog, file)
