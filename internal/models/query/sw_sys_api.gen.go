@@ -41,11 +41,6 @@ func newSysApi(db *gorm.DB, opts ...gen.DOOption) sysApi {
 	_sysApi.CreatedAt = field.NewTime(tableName, "created_at")
 	_sysApi.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_sysApi.DeletedAt = field.NewField(tableName, "deleted_at")
-	_sysApi.ApiGroup = sysApiBelongsToApiGroup{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("ApiGroup", "entity.SysApiGroup"),
-	}
 
 	_sysApi.fillFieldMap()
 
@@ -70,7 +65,6 @@ type sysApi struct {
 	CreatedAt   field.Time   // 创建时间
 	UpdatedAt   field.Time   // 更新时间
 	DeletedAt   field.Field  // 删除时间
-	ApiGroup    sysApiBelongsToApiGroup
 
 	fieldMap map[string]field.Expr
 }
@@ -116,7 +110,7 @@ func (s *sysApi) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (s *sysApi) fillFieldMap() {
-	s.fieldMap = make(map[string]field.Expr, 14)
+	s.fieldMap = make(map[string]field.Expr, 13)
 	s.fieldMap["id"] = s.ID
 	s.fieldMap["name"] = s.Name
 	s.fieldMap["path"] = s.Path
@@ -130,101 +124,16 @@ func (s *sysApi) fillFieldMap() {
 	s.fieldMap["created_at"] = s.CreatedAt
 	s.fieldMap["updated_at"] = s.UpdatedAt
 	s.fieldMap["deleted_at"] = s.DeletedAt
-
 }
 
 func (s sysApi) clone(db *gorm.DB) sysApi {
 	s.sysApiDo.ReplaceConnPool(db.Statement.ConnPool)
-	s.ApiGroup.db = db.Session(&gorm.Session{Initialized: true})
-	s.ApiGroup.db.Statement.ConnPool = db.Statement.ConnPool
 	return s
 }
 
 func (s sysApi) replaceDB(db *gorm.DB) sysApi {
 	s.sysApiDo.ReplaceDB(db)
-	s.ApiGroup.db = db.Session(&gorm.Session{})
 	return s
-}
-
-type sysApiBelongsToApiGroup struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a sysApiBelongsToApiGroup) Where(conds ...field.Expr) *sysApiBelongsToApiGroup {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a sysApiBelongsToApiGroup) WithContext(ctx context.Context) *sysApiBelongsToApiGroup {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a sysApiBelongsToApiGroup) Session(session *gorm.Session) *sysApiBelongsToApiGroup {
-	a.db = a.db.Session(session)
-	return &a
-}
-
-func (a sysApiBelongsToApiGroup) Model(m *entity.SysApi) *sysApiBelongsToApiGroupTx {
-	return &sysApiBelongsToApiGroupTx{a.db.Model(m).Association(a.Name())}
-}
-
-func (a sysApiBelongsToApiGroup) Unscoped() *sysApiBelongsToApiGroup {
-	a.db = a.db.Unscoped()
-	return &a
-}
-
-type sysApiBelongsToApiGroupTx struct{ tx *gorm.Association }
-
-func (a sysApiBelongsToApiGroupTx) Find() (result *entity.SysApiGroup, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a sysApiBelongsToApiGroupTx) Append(values ...*entity.SysApiGroup) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a sysApiBelongsToApiGroupTx) Replace(values ...*entity.SysApiGroup) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a sysApiBelongsToApiGroupTx) Delete(values ...*entity.SysApiGroup) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a sysApiBelongsToApiGroupTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a sysApiBelongsToApiGroupTx) Count() int64 {
-	return a.tx.Count()
-}
-
-func (a sysApiBelongsToApiGroupTx) Unscoped() *sysApiBelongsToApiGroupTx {
-	a.tx = a.tx.Unscoped()
-	return &a
 }
 
 type sysApiDo struct{ gen.DO }

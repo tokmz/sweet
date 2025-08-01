@@ -27,7 +27,6 @@ type SysApi struct {
 	CreatedAt   *time.Time     `gorm:"column:created_at;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:创建时间" json:"created_at"` // 创建时间
 	UpdatedAt   *time.Time     `gorm:"column:updated_at;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:更新时间" json:"updated_at"` // 更新时间
 	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;type:datetime;comment:删除时间" json:"deleted_at"`                                    // 删除时间
-	ApiGroup    *SysApiGroup   `gorm:"foreignKey:Group;references:Code" json:"api_group"`
 }
 
 // TableName SysApi's table name

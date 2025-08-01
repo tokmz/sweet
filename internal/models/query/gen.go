@@ -20,6 +20,7 @@ var (
 	SysApi          *sysApi
 	SysApiGroup     *sysApiGroup
 	SysDept         *sysDept
+	SysFile         *sysFile
 	SysLoginLog     *sysLoginLog
 	SysMenu         *sysMenu
 	SysMenuConfig   *sysMenuConfig
@@ -36,6 +37,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	SysApi = &Q.SysApi
 	SysApiGroup = &Q.SysApiGroup
 	SysDept = &Q.SysDept
+	SysFile = &Q.SysFile
 	SysLoginLog = &Q.SysLoginLog
 	SysMenu = &Q.SysMenu
 	SysMenuConfig = &Q.SysMenuConfig
@@ -53,6 +55,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		SysApi:          newSysApi(db, opts...),
 		SysApiGroup:     newSysApiGroup(db, opts...),
 		SysDept:         newSysDept(db, opts...),
+		SysFile:         newSysFile(db, opts...),
 		SysLoginLog:     newSysLoginLog(db, opts...),
 		SysMenu:         newSysMenu(db, opts...),
 		SysMenuConfig:   newSysMenuConfig(db, opts...),
@@ -71,6 +74,7 @@ type Query struct {
 	SysApi          sysApi
 	SysApiGroup     sysApiGroup
 	SysDept         sysDept
+	SysFile         sysFile
 	SysLoginLog     sysLoginLog
 	SysMenu         sysMenu
 	SysMenuConfig   sysMenuConfig
@@ -90,6 +94,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		SysApi:          q.SysApi.clone(db),
 		SysApiGroup:     q.SysApiGroup.clone(db),
 		SysDept:         q.SysDept.clone(db),
+		SysFile:         q.SysFile.clone(db),
 		SysLoginLog:     q.SysLoginLog.clone(db),
 		SysMenu:         q.SysMenu.clone(db),
 		SysMenuConfig:   q.SysMenuConfig.clone(db),
@@ -116,6 +121,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		SysApi:          q.SysApi.replaceDB(db),
 		SysApiGroup:     q.SysApiGroup.replaceDB(db),
 		SysDept:         q.SysDept.replaceDB(db),
+		SysFile:         q.SysFile.replaceDB(db),
 		SysLoginLog:     q.SysLoginLog.replaceDB(db),
 		SysMenu:         q.SysMenu.replaceDB(db),
 		SysMenuConfig:   q.SysMenuConfig.replaceDB(db),
@@ -132,6 +138,7 @@ type queryCtx struct {
 	SysApi          ISysApiDo
 	SysApiGroup     ISysApiGroupDo
 	SysDept         ISysDeptDo
+	SysFile         ISysFileDo
 	SysLoginLog     ISysLoginLogDo
 	SysMenu         ISysMenuDo
 	SysMenuConfig   ISysMenuConfigDo
@@ -148,6 +155,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		SysApi:          q.SysApi.WithContext(ctx),
 		SysApiGroup:     q.SysApiGroup.WithContext(ctx),
 		SysDept:         q.SysDept.WithContext(ctx),
+		SysFile:         q.SysFile.WithContext(ctx),
 		SysLoginLog:     q.SysLoginLog.WithContext(ctx),
 		SysMenu:         q.SysMenu.WithContext(ctx),
 		SysMenuConfig:   q.SysMenuConfig.WithContext(ctx),

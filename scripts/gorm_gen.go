@@ -161,6 +161,7 @@ func (g *Generator) SetupModelRelations() {
 	user := g.Gen.GenerateModel(userTable)
 	role := g.Gen.GenerateModel(roleTable)
 	menu := g.Gen.GenerateModel(menuTable)
+	menuConfig := g.Gen.GenerateModel(menuConfigTable)
 	apiGroup := g.Gen.GenerateModel(apiGroupTable)
 	api := g.Gen.GenerateModel(apiTable)
 	dept := g.Gen.GenerateModel(deptTable)
@@ -226,6 +227,15 @@ func (g *Generator) SetupModelRelations() {
 			},
 			JSONTag: "children",
 		}),
+		// 菜单与菜单配置的一对一关系
+		gen.FieldRelate(field.HasOne, "MenuConfig", menuConfig, &field.RelateConfig{
+			RelatePointer: true,
+			GORMTag: map[string][]string{
+				"foreignKey": {"MenuID"},
+				"references": {"ID"},
+			},
+			JSONTag: "menu_config",
+		}),
 	}
 
 	// 设置角色菜单关联表的选项
@@ -272,14 +282,14 @@ func (g *Generator) SetupModelRelations() {
 	apiOpts := []gen.ModelOpt{
 		softDeleteField,
 		// API与API分组的多对一关系
-		gen.FieldRelate(field.BelongsTo, "ApiGroup", apiGroup, &field.RelateConfig{
-			RelatePointer: true,
-			GORMTag: map[string][]string{
-				"foreignKey": {"Group"},
-				"references": {"Code"},
-			},
-			JSONTag: "api_group",
-		}),
+		//gen.FieldRelate(field.BelongsTo, "ApiGroup", apiGroup, &field.RelateConfig{
+		//	RelatePointer: true,
+		//	GORMTag: map[string][]string{
+		//		"foreignKey": {"Group"},
+		//		"references": {"Code"},
+		//	},
+		//	JSONTag: "api_group",
+		//}),
 	}
 
 	// 设置角色API关联表的选项
@@ -385,7 +395,7 @@ func (g *Generator) SetupModelRelations() {
 	user = g.Gen.GenerateModel(userTable, userOpts...)
 	role = g.Gen.GenerateModel(roleTable, roleOpts...)
 	menu = g.Gen.GenerateModel(menuTable, menuOpts...)
-	menuConfig := g.Gen.GenerateModel(menuConfigTable, menuConfigOpts...)
+	menuConfig = g.Gen.GenerateModel(menuConfigTable, menuConfigOpts...)
 	roleMenu := g.Gen.GenerateModel(roleMenuTable, roleMenuOpts...)
 	apiGroup = g.Gen.GenerateModel(apiGroupTable, apiGroupOpts...)
 	api = g.Gen.GenerateModel(apiTable, apiOpts...)
