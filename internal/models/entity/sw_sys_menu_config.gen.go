@@ -28,7 +28,6 @@ type SysMenuConfig struct {
 	ActivePath    *string    `gorm:"column:active_path;type:varchar(255);comment:激活菜单路径" json:"active_path"`                            // 激活菜单路径
 	CreatedAt     *time.Time `gorm:"column:created_at;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:创建时间" json:"created_at"` // 创建时间
 	UpdatedAt     *time.Time `gorm:"column:updated_at;type:datetime;not null;default:CURRENT_TIMESTAMP;comment:更新时间" json:"updated_at"` // 更新时间
-	Menu          *SysMenu   `gorm:"foreignKey:MenuID;references:ID" json:"menu"`
 }
 
 // TableName SysMenuConfig's table name

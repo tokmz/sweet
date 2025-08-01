@@ -258,17 +258,7 @@ func (g *Generator) SetupModelRelations() {
 	}
 
 	// 设置菜单配置表的选项
-	menuConfigOpts := []gen.ModelOpt{
-		// 菜单配置与菜单的一对一关系
-		gen.FieldRelate(field.BelongsTo, "Menu", menu, &field.RelateConfig{
-			RelatePointer: true,
-			GORMTag: map[string][]string{
-				"foreignKey": {"MenuID"},
-				"references": {"ID"},
-			},
-			JSONTag: "menu",
-		}),
-	}
+	var menuConfigOpts []gen.ModelOpt
 
 	// 设置API分组表的选项
 	apiGroupOpts := []gen.ModelOpt{
@@ -278,15 +268,6 @@ func (g *Generator) SetupModelRelations() {
 	// 设置API表的选项
 	apiOpts := []gen.ModelOpt{
 		softDeleteField,
-		// API与API分组的多对一关系
-		//gen.FieldRelate(field.BelongsTo, "ApiGroup", apiGroup, &field.RelateConfig{
-		//	RelatePointer: true,
-		//	GORMTag: map[string][]string{
-		//		"foreignKey": {"Group"},
-		//		"references": {"Code"},
-		//	},
-		//	JSONTag: "api_group",
-		//}),
 	}
 
 	// 设置角色API关联表的选项

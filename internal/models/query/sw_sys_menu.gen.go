@@ -57,6 +57,12 @@ func newSysMenu(db *gorm.DB, opts ...gen.DOOption) sysMenu {
 		RelationField: field.NewRelation("Children", "entity.SysMenu"),
 	}
 
+	_sysMenu.MenuConfig = sysMenuHasOneMenuConfig{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("MenuConfig", "entity.SysMenuConfig"),
+	}
+
 	_sysMenu.fillFieldMap()
 
 	return _sysMenu
@@ -87,6 +93,8 @@ type sysMenu struct {
 	Parent    sysMenuBelongsToParent
 
 	Children sysMenuHasManyChildren
+
+	MenuConfig sysMenuHasOneMenuConfig
 
 	fieldMap map[string]field.Expr
 }
@@ -136,7 +144,7 @@ func (s *sysMenu) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (s *sysMenu) fillFieldMap() {
-	s.fieldMap = make(map[string]field.Expr, 19)
+	s.fieldMap = make(map[string]field.Expr, 20)
 	s.fieldMap["id"] = s.ID
 	s.fieldMap["name"] = s.Name
 	s.fieldMap["title"] = s.Title
@@ -163,6 +171,8 @@ func (s sysMenu) clone(db *gorm.DB) sysMenu {
 	s.Parent.db.Statement.ConnPool = db.Statement.ConnPool
 	s.Children.db = db.Session(&gorm.Session{Initialized: true})
 	s.Children.db.Statement.ConnPool = db.Statement.ConnPool
+	s.MenuConfig.db = db.Session(&gorm.Session{Initialized: true})
+	s.MenuConfig.db.Statement.ConnPool = db.Statement.ConnPool
 	return s
 }
 
@@ -170,6 +180,7 @@ func (s sysMenu) replaceDB(db *gorm.DB) sysMenu {
 	s.sysMenuDo.ReplaceDB(db)
 	s.Parent.db = db.Session(&gorm.Session{})
 	s.Children.db = db.Session(&gorm.Session{})
+	s.MenuConfig.db = db.Session(&gorm.Session{})
 	return s
 }
 
@@ -331,6 +342,87 @@ func (a sysMenuHasManyChildrenTx) Count() int64 {
 }
 
 func (a sysMenuHasManyChildrenTx) Unscoped() *sysMenuHasManyChildrenTx {
+	a.tx = a.tx.Unscoped()
+	return &a
+}
+
+type sysMenuHasOneMenuConfig struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a sysMenuHasOneMenuConfig) Where(conds ...field.Expr) *sysMenuHasOneMenuConfig {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a sysMenuHasOneMenuConfig) WithContext(ctx context.Context) *sysMenuHasOneMenuConfig {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a sysMenuHasOneMenuConfig) Session(session *gorm.Session) *sysMenuHasOneMenuConfig {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a sysMenuHasOneMenuConfig) Model(m *entity.SysMenu) *sysMenuHasOneMenuConfigTx {
+	return &sysMenuHasOneMenuConfigTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a sysMenuHasOneMenuConfig) Unscoped() *sysMenuHasOneMenuConfig {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type sysMenuHasOneMenuConfigTx struct{ tx *gorm.Association }
+
+func (a sysMenuHasOneMenuConfigTx) Find() (result *entity.SysMenuConfig, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a sysMenuHasOneMenuConfigTx) Append(values ...*entity.SysMenuConfig) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a sysMenuHasOneMenuConfigTx) Replace(values ...*entity.SysMenuConfig) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a sysMenuHasOneMenuConfigTx) Delete(values ...*entity.SysMenuConfig) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a sysMenuHasOneMenuConfigTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a sysMenuHasOneMenuConfigTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a sysMenuHasOneMenuConfigTx) Unscoped() *sysMenuHasOneMenuConfigTx {
 	a.tx = a.tx.Unscoped()
 	return &a
 }
