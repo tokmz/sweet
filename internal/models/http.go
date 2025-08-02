@@ -29,9 +29,9 @@ type Response struct {
 	Data    any    `json:"data"`
 }
 
-type PageRes struct {
+type PageRes[T any] struct {
 	Total int64 `json:"total"`
-	List  any   `json:"list"`
+	List  []*T  `json:"list"`
 }
 
 func NewResponse(code int, message string, data any) *Response {
@@ -42,8 +42,8 @@ func NewResponse(code int, message string, data any) *Response {
 	}
 }
 
-func NewPageRes(total int64, list any) *PageRes {
-	return &PageRes{
+func NewPageRes[T any](total int64, list []*T) *PageRes[T] {
+	return &PageRes[T]{
 		Total: total,
 		List:  list,
 	}
