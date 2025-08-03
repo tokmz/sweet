@@ -277,6 +277,7 @@ DROP TABLE IF EXISTS `sw_sys_operation_log`;
 CREATE TABLE `sw_sys_operation_log` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '日志ID',
   `user_id` bigint unsigned DEFAULT NULL COMMENT '操作用户ID',
+  `username` varchar(64) DEFAULT NULL COMMENT '操作用户名',
   `module` varchar(50) NOT NULL COMMENT '操作模块',
   `operation` varchar(50) NOT NULL COMMENT '操作类型',
   `method` varchar(10) NOT NULL COMMENT 'HTTP方法',
@@ -292,6 +293,7 @@ CREATE TABLE `sw_sys_operation_log` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
+  KEY `idx_username` (`username`),
   KEY `idx_module` (`module`),
   KEY `idx_operation` (`operation`),
   KEY `idx_status` (`status`),

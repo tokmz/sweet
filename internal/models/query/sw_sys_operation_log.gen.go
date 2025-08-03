@@ -30,6 +30,7 @@ func newSysOperationLog(db *gorm.DB, opts ...gen.DOOption) sysOperationLog {
 	_sysOperationLog.ALL = field.NewAsterisk(tableName)
 	_sysOperationLog.ID = field.NewInt64(tableName, "id")
 	_sysOperationLog.UserID = field.NewInt64(tableName, "user_id")
+	_sysOperationLog.Username = field.NewString(tableName, "username")
 	_sysOperationLog.Module = field.NewString(tableName, "module")
 	_sysOperationLog.Operation = field.NewString(tableName, "operation")
 	_sysOperationLog.Method = field.NewString(tableName, "method")
@@ -61,6 +62,7 @@ type sysOperationLog struct {
 	ALL           field.Asterisk
 	ID            field.Int64  // 日志ID
 	UserID        field.Int64  // 操作用户ID
+	Username      field.String // 操作用户名
 	Module        field.String // 操作模块
 	Operation     field.String // 操作类型
 	Method        field.String // HTTP方法
@@ -93,6 +95,7 @@ func (s *sysOperationLog) updateTableName(table string) *sysOperationLog {
 	s.ALL = field.NewAsterisk(table)
 	s.ID = field.NewInt64(table, "id")
 	s.UserID = field.NewInt64(table, "user_id")
+	s.Username = field.NewString(table, "username")
 	s.Module = field.NewString(table, "module")
 	s.Operation = field.NewString(table, "operation")
 	s.Method = field.NewString(table, "method")
@@ -122,9 +125,10 @@ func (s *sysOperationLog) GetFieldByName(fieldName string) (field.OrderExpr, boo
 }
 
 func (s *sysOperationLog) fillFieldMap() {
-	s.fieldMap = make(map[string]field.Expr, 16)
+	s.fieldMap = make(map[string]field.Expr, 17)
 	s.fieldMap["id"] = s.ID
 	s.fieldMap["user_id"] = s.UserID
+	s.fieldMap["username"] = s.Username
 	s.fieldMap["module"] = s.Module
 	s.fieldMap["operation"] = s.Operation
 	s.fieldMap["method"] = s.Method

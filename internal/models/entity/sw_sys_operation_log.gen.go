@@ -14,6 +14,7 @@ const TableNameSysOperationLog = "sw_sys_operation_log"
 type SysOperationLog struct {
 	ID            int64      `gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true;comment:日志ID" json:"id"`               // 日志ID
 	UserID        *int64     `gorm:"column:user_id;type:bigint unsigned;comment:操作用户ID" json:"user_id"`                                 // 操作用户ID
+	Username      *string    `gorm:"column:username;type:varchar(64);comment:操作用户名" json:"username"`                                    // 操作用户名
 	Module        string     `gorm:"column:module;type:varchar(50);not null;comment:操作模块" json:"module"`                                // 操作模块
 	Operation     string     `gorm:"column:operation;type:varchar(50);not null;comment:操作类型" json:"operation"`                          // 操作类型
 	Method        string     `gorm:"column:method;type:varchar(10);not null;comment:HTTP方法" json:"method"`                              // HTTP方法

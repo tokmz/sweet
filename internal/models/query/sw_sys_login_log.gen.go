@@ -41,9 +41,13 @@ func newSysLoginLog(db *gorm.DB, opts ...gen.DOOption) sysLoginLog {
 	_sysLoginLog.Os = field.NewString(tableName, "os")
 	_sysLoginLog.Status = field.NewInt64(tableName, "status")
 	_sysLoginLog.FailReason = field.NewString(tableName, "fail_reason")
+	_sysLoginLog.SessionID = field.NewString(tableName, "session_id")
+	_sysLoginLog.LoginDuration = field.NewInt64(tableName, "login_duration")
+	_sysLoginLog.LogoutType = field.NewInt64(tableName, "logout_type")
+	_sysLoginLog.RiskLevel = field.NewInt64(tableName, "risk_level")
+	_sysLoginLog.IsDeleted = field.NewInt64(tableName, "is_deleted")
 	_sysLoginLog.CreatedAt = field.NewTime(tableName, "created_at")
 	_sysLoginLog.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_sysLoginLog.DeletedAt = field.NewField(tableName, "deleted_at")
 	_sysLoginLog.User = sysLoginLogBelongsToUser{
 		db: db.Session(&gorm.Session{}),
 
@@ -59,24 +63,28 @@ func newSysLoginLog(db *gorm.DB, opts ...gen.DOOption) sysLoginLog {
 type sysLoginLog struct {
 	sysLoginLogDo
 
-	ALL        field.Asterisk
-	ID         field.Int64  // 日志ID
-	UserID     field.Int64  // 用户ID
-	Username   field.String // 登录用户名
-	LoginType  field.Int64  // 登录类型（1账号密码 2手机验证码 3邮箱验证码 4第三方登录 5微信 6QQ 7支付宝）
-	ClientType field.Int64  // 客户端类型（1Web 2移动端 3小程序 4API 5管理后台）
-	IP         field.String // 登录IP
-	Location   field.String // IP归属地
-	UserAgent  field.String // 用户代理
-	DeviceInfo field.String // 设备信息
-	Browser    field.String // 浏览器
-	Os         field.String // 操作系统
-	Status     field.Int64  // 登录状态（1成功 2失败 3异常）
-	FailReason field.String // 失败原因
-	CreatedAt  field.Time   // 创建时间
-	UpdatedAt  field.Time   // 更新时间
-	DeletedAt  field.Field  // 删除时间
-	User       sysLoginLogBelongsToUser
+	ALL           field.Asterisk
+	ID            field.Int64  // 日志ID
+	UserID        field.Int64  // 用户ID
+	Username      field.String // 登录用户名
+	LoginType     field.Int64  // 登录类型（1账号密码 2手机验证码 3邮箱验证码 4第三方登录 5微信 6QQ 7支付宝）
+	ClientType    field.Int64  // 客户端类型（1Web 2移动端 3小程序 4API 5管理后台）
+	IP            field.String // 登录IP
+	Location      field.String // IP归属地
+	UserAgent     field.String // 用户代理
+	DeviceInfo    field.String // 设备信息
+	Browser       field.String // 浏览器
+	Os            field.String // 操作系统
+	Status        field.Int64  // 登录状态（1成功 2失败 3异常）
+	FailReason    field.String // 失败原因
+	SessionID     field.String // 会话ID
+	LoginDuration field.Int64  // 登录持续时间（秒）
+	LogoutType    field.Int64  // 退出类型（1主动退出 2超时退出 3强制退出）
+	RiskLevel     field.Int64  // 风险等级（1低风险 2中风险 3高风险）
+	IsDeleted     field.Int64  // 是否删除（0否 1是）
+	CreatedAt     field.Time   // 创建时间
+	UpdatedAt     field.Time   // 更新时间
+	User          sysLoginLogBelongsToUser
 
 	fieldMap map[string]field.Expr
 }
@@ -106,9 +114,13 @@ func (s *sysLoginLog) updateTableName(table string) *sysLoginLog {
 	s.Os = field.NewString(table, "os")
 	s.Status = field.NewInt64(table, "status")
 	s.FailReason = field.NewString(table, "fail_reason")
+	s.SessionID = field.NewString(table, "session_id")
+	s.LoginDuration = field.NewInt64(table, "login_duration")
+	s.LogoutType = field.NewInt64(table, "logout_type")
+	s.RiskLevel = field.NewInt64(table, "risk_level")
+	s.IsDeleted = field.NewInt64(table, "is_deleted")
 	s.CreatedAt = field.NewTime(table, "created_at")
 	s.UpdatedAt = field.NewTime(table, "updated_at")
-	s.DeletedAt = field.NewField(table, "deleted_at")
 
 	s.fillFieldMap()
 
@@ -125,7 +137,7 @@ func (s *sysLoginLog) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (s *sysLoginLog) fillFieldMap() {
-	s.fieldMap = make(map[string]field.Expr, 17)
+	s.fieldMap = make(map[string]field.Expr, 21)
 	s.fieldMap["id"] = s.ID
 	s.fieldMap["user_id"] = s.UserID
 	s.fieldMap["username"] = s.Username
@@ -139,9 +151,13 @@ func (s *sysLoginLog) fillFieldMap() {
 	s.fieldMap["os"] = s.Os
 	s.fieldMap["status"] = s.Status
 	s.fieldMap["fail_reason"] = s.FailReason
+	s.fieldMap["session_id"] = s.SessionID
+	s.fieldMap["login_duration"] = s.LoginDuration
+	s.fieldMap["logout_type"] = s.LogoutType
+	s.fieldMap["risk_level"] = s.RiskLevel
+	s.fieldMap["is_deleted"] = s.IsDeleted
 	s.fieldMap["created_at"] = s.CreatedAt
 	s.fieldMap["updated_at"] = s.UpdatedAt
-	s.fieldMap["deleted_at"] = s.DeletedAt
 
 }
 

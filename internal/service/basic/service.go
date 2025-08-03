@@ -1,0 +1,35 @@
+package basic
+
+import "sync"
+
+// Service 基础服务
+type Service struct {
+	// loginLog 登录日志服务
+	loginLog ILoginLogService
+	// operation 操作日志服务
+	operation IOperationLogService
+}
+
+var (
+	once *sync.Once
+)
+
+// NewService 创建基础服务
+func NewService() IBasicService {
+	s := &Service{}
+	once.Do(func() {
+		s.loginLog = NewLoginLogService()
+		s.operation = NewOperationLogService()
+	})
+	return s
+}
+
+// LoginLog 获取登录日志服务
+func (s *Service) LoginLog() ILoginLogService {
+	return s.loginLog
+}
+
+// OperationLog 获取操作日志服务
+func (s *Service) OperationLog() IOperationLogService {
+	return s.operation
+}
