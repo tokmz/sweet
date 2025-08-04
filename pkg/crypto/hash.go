@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // MD5 计算字符串的 MD5 值
@@ -71,4 +73,40 @@ func SaltWithLength(length int) string {
 	}
 	
 	return string(result)
+}
+
+// GenerateSalt 生成密码盐值
+func GenerateSalt() string {
+	return Salt()
+}
+
+// HashPassword 使用盐值对密码进行哈希
+func HashPassword(password, salt string) string {
+	// 将密码和盐值组合
+	combined := password + salt
+	// 使用SHA256进行哈希
+	return Hash256(combined)
+}
+
+// VerifyPassword 验证密码是否正确
+func VerifyPassword(password, salt, hashedPassword string) bool {
+	// 对输入的密码进行相同的哈希处理
+	inputHash := HashPassword(password, salt)
+	// 比较哈希值
+	return inputHash == hashedPassword
+}
+
+// BcryptHashPassword 使用bcrypt对密码进行哈希（推荐使用）
+func BcryptHashPassword(password string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", fmt.Errorf("bcrypt hash password error: %w", err)
+	}
+	return string(hashed), nil
+}
+
+// BcryptVerifyPassword 使用bcrypt验证密码
+func BcryptVerifyPassword(password, hashedPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 }

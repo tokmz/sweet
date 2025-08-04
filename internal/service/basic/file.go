@@ -860,7 +860,7 @@ func (s *FileService) calculateFileMD5(file multipart.File) (string, error) {
 func (s *FileService) saveToLocal(file multipart.File, fileName string) (filePath, fileURL string, err error) {
 	// 创建上传目录
 	uploadDir := "uploads/" + time.Now().Format("2006/01/02")
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+	if err = os.MkdirAll(uploadDir, 0755); err != nil {
 		return "", "", fmt.Errorf("创建上传目录失败: %v", err)
 	}
 
