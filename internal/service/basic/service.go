@@ -8,6 +8,8 @@ type Service struct {
 	loginLog ILoginLogService
 	// operation 操作日志服务
 	operation IOperationLogService
+	// file 文件服务
+	file IFileService
 }
 
 var (
@@ -20,6 +22,7 @@ func NewService() IBasicService {
 	once.Do(func() {
 		s.loginLog = NewLoginLogService()
 		s.operation = NewOperationLogService()
+		s.file = NewFileService()
 	})
 	return s
 }
@@ -32,4 +35,9 @@ func (s *Service) LoginLog() ILoginLogService {
 // OperationLog 获取操作日志服务
 func (s *Service) OperationLog() IOperationLogService {
 	return s.operation
+}
+
+// File 获取文件服务
+func (s *Service) File() IFileService {
+	return s.file
 }
