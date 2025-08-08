@@ -23,7 +23,6 @@ var (
 	SysFile         *sysFile
 	SysLoginLog     *sysLoginLog
 	SysMenu         *sysMenu
-	SysMenuConfig   *sysMenuConfig
 	SysOperationLog *sysOperationLog
 	SysPost         *sysPost
 	SysRole         *sysRole
@@ -40,7 +39,6 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	SysFile = &Q.SysFile
 	SysLoginLog = &Q.SysLoginLog
 	SysMenu = &Q.SysMenu
-	SysMenuConfig = &Q.SysMenuConfig
 	SysOperationLog = &Q.SysOperationLog
 	SysPost = &Q.SysPost
 	SysRole = &Q.SysRole
@@ -58,7 +56,6 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		SysFile:         newSysFile(db, opts...),
 		SysLoginLog:     newSysLoginLog(db, opts...),
 		SysMenu:         newSysMenu(db, opts...),
-		SysMenuConfig:   newSysMenuConfig(db, opts...),
 		SysOperationLog: newSysOperationLog(db, opts...),
 		SysPost:         newSysPost(db, opts...),
 		SysRole:         newSysRole(db, opts...),
@@ -77,7 +74,6 @@ type Query struct {
 	SysFile         sysFile
 	SysLoginLog     sysLoginLog
 	SysMenu         sysMenu
-	SysMenuConfig   sysMenuConfig
 	SysOperationLog sysOperationLog
 	SysPost         sysPost
 	SysRole         sysRole
@@ -97,7 +93,6 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		SysFile:         q.SysFile.clone(db),
 		SysLoginLog:     q.SysLoginLog.clone(db),
 		SysMenu:         q.SysMenu.clone(db),
-		SysMenuConfig:   q.SysMenuConfig.clone(db),
 		SysOperationLog: q.SysOperationLog.clone(db),
 		SysPost:         q.SysPost.clone(db),
 		SysRole:         q.SysRole.clone(db),
@@ -124,7 +119,6 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		SysFile:         q.SysFile.replaceDB(db),
 		SysLoginLog:     q.SysLoginLog.replaceDB(db),
 		SysMenu:         q.SysMenu.replaceDB(db),
-		SysMenuConfig:   q.SysMenuConfig.replaceDB(db),
 		SysOperationLog: q.SysOperationLog.replaceDB(db),
 		SysPost:         q.SysPost.replaceDB(db),
 		SysRole:         q.SysRole.replaceDB(db),
@@ -141,7 +135,6 @@ type queryCtx struct {
 	SysFile         ISysFileDo
 	SysLoginLog     ISysLoginLogDo
 	SysMenu         ISysMenuDo
-	SysMenuConfig   ISysMenuConfigDo
 	SysOperationLog ISysOperationLogDo
 	SysPost         ISysPostDo
 	SysRole         ISysRoleDo
@@ -158,7 +151,6 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		SysFile:         q.SysFile.WithContext(ctx),
 		SysLoginLog:     q.SysLoginLog.WithContext(ctx),
 		SysMenu:         q.SysMenu.WithContext(ctx),
-		SysMenuConfig:   q.SysMenuConfig.WithContext(ctx),
 		SysOperationLog: q.SysOperationLog.WithContext(ctx),
 		SysPost:         q.SysPost.WithContext(ctx),
 		SysRole:         q.SysRole.WithContext(ctx),

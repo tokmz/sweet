@@ -145,7 +145,6 @@ func (g *Generator) SetupModelRelations() {
 	userTable := "sw_sys_user"
 	roleTable := "sw_sys_role"
 	menuTable := "sw_sys_menu"
-	menuConfigTable := "sw_sys_menu_config"
 	roleMenuTable := "sw_sys_role_menu"
 	apiGroupTable := "sw_sys_api_group"
 	apiTable := "sw_sys_api"
@@ -161,7 +160,6 @@ func (g *Generator) SetupModelRelations() {
 	user := g.Gen.GenerateModel(userTable)
 	role := g.Gen.GenerateModel(roleTable)
 	menu := g.Gen.GenerateModel(menuTable)
-	menuConfig := g.Gen.GenerateModel(menuConfigTable)
 	api := g.Gen.GenerateModel(apiTable)
 	dept := g.Gen.GenerateModel(deptTable)
 	post := g.Gen.GenerateModel(postTable)
@@ -224,15 +222,7 @@ func (g *Generator) SetupModelRelations() {
 			},
 			JSONTag: "children",
 		}),
-		// 菜单与菜单配置的一对一关系
-		gen.FieldRelate(field.HasOne, "MenuConfig", menuConfig, &field.RelateConfig{
-			RelatePointer: true,
-			GORMTag: map[string][]string{
-				"foreignKey": {"MenuID"},
-				"references": {"ID"},
-			},
-			JSONTag: "menu_config",
-		}),
+
 	}
 
 	// 设置角色菜单关联表的选项
@@ -257,8 +247,7 @@ func (g *Generator) SetupModelRelations() {
 		}),
 	}
 
-	// 设置菜单配置表的选项
-	var menuConfigOpts []gen.ModelOpt
+
 
 	// 设置API分组表的选项
 	apiGroupOpts := []gen.ModelOpt{
@@ -373,7 +362,6 @@ func (g *Generator) SetupModelRelations() {
 	user = g.Gen.GenerateModel(userTable, userOpts...)
 	role = g.Gen.GenerateModel(roleTable, roleOpts...)
 	menu = g.Gen.GenerateModel(menuTable, menuOpts...)
-	menuConfig = g.Gen.GenerateModel(menuConfigTable, menuConfigOpts...)
 	roleMenu := g.Gen.GenerateModel(roleMenuTable, roleMenuOpts...)
 	apiGroup := g.Gen.GenerateModel(apiGroupTable, apiGroupOpts...)
 	api = g.Gen.GenerateModel(apiTable, apiOpts...)
@@ -386,7 +374,7 @@ func (g *Generator) SetupModelRelations() {
 	file := g.Gen.GenerateModel(fileTable, fileOpts...)
 
 	// 应用基本模型
-	g.Gen.ApplyBasic(user, role, menu, menuConfig, roleMenu, apiGroup, api, roleApi, dept, post, loginLog, operationLog, file)
+	g.Gen.ApplyBasic(user, role, menu, roleMenu, apiGroup, api, roleApi, dept, post, loginLog, operationLog, file)
 }
 
 // GenerateModelsWithRelations 生成带关联关系的模型

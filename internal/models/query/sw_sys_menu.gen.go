@@ -29,9 +29,9 @@ func newSysMenu(db *gorm.DB, opts ...gen.DOOption) sysMenu {
 	tableName := _sysMenu.sysMenuDo.TableName()
 	_sysMenu.ALL = field.NewAsterisk(tableName)
 	_sysMenu.ID = field.NewInt64(tableName, "id")
+	_sysMenu.ParentID = field.NewInt64(tableName, "parent_id")
 	_sysMenu.Name = field.NewString(tableName, "name")
 	_sysMenu.Title = field.NewString(tableName, "title")
-	_sysMenu.ParentID = field.NewInt64(tableName, "parent_id")
 	_sysMenu.Path = field.NewString(tableName, "path")
 	_sysMenu.Component = field.NewString(tableName, "component")
 	_sysMenu.MenuType = field.NewInt64(tableName, "menu_type")
@@ -40,6 +40,18 @@ func newSysMenu(db *gorm.DB, opts ...gen.DOOption) sysMenu {
 	_sysMenu.Icon = field.NewString(tableName, "icon")
 	_sysMenu.Order_ = field.NewInt64(tableName, "order")
 	_sysMenu.Remark = field.NewString(tableName, "remark")
+	_sysMenu.Query = field.NewString(tableName, "query")
+	_sysMenu.IsFrame = field.NewInt64(tableName, "is_frame")
+	_sysMenu.ShowBadge = field.NewInt64(tableName, "show_badge")
+	_sysMenu.ShowTextBadge = field.NewString(tableName, "show_text_badge")
+	_sysMenu.IsHide = field.NewInt64(tableName, "is_hide")
+	_sysMenu.IsHideTab = field.NewInt64(tableName, "is_hide_tab")
+	_sysMenu.Link = field.NewString(tableName, "link")
+	_sysMenu.IsIframe = field.NewInt64(tableName, "is_iframe")
+	_sysMenu.KeepAlive = field.NewInt64(tableName, "keep_alive")
+	_sysMenu.FixedTab = field.NewInt64(tableName, "fixed_tab")
+	_sysMenu.IsFirstLevel = field.NewInt64(tableName, "is_first_level")
+	_sysMenu.ActivePath = field.NewString(tableName, "active_path")
 	_sysMenu.CreateBy = field.NewInt64(tableName, "create_by")
 	_sysMenu.UpdateBy = field.NewInt64(tableName, "update_by")
 	_sysMenu.CreatedAt = field.NewTime(tableName, "created_at")
@@ -57,12 +69,6 @@ func newSysMenu(db *gorm.DB, opts ...gen.DOOption) sysMenu {
 		RelationField: field.NewRelation("Children", "entity.SysMenu"),
 	}
 
-	_sysMenu.MenuConfig = sysMenuHasOneMenuConfig{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("MenuConfig", "entity.SysMenuConfig"),
-	}
-
 	_sysMenu.fillFieldMap()
 
 	return _sysMenu
@@ -72,29 +78,39 @@ func newSysMenu(db *gorm.DB, opts ...gen.DOOption) sysMenu {
 type sysMenu struct {
 	sysMenuDo
 
-	ALL       field.Asterisk
-	ID        field.Int64  // 菜单ID
-	Name      field.String // 组件名称/路由名称
-	Title     field.String // 菜单名称
-	ParentID  field.Int64  // 父菜单ID
-	Path      field.String // 路由地址
-	Component field.String // 组件地址
-	MenuType  field.Int64  // 菜单类型（1 目录 2 菜单 3 按钮）
-	Status    field.Int64  // 菜单状态(1 正常 2 停用)
-	Perms     field.String // 权限标识
-	Icon      field.String // 菜单图标
-	Order_    field.Int64  // 显示顺序 从大到小
-	Remark    field.String // 备注
-	CreateBy  field.Int64  // 创建者
-	UpdateBy  field.Int64  // 更新者
-	CreatedAt field.Time   // 创建时间
-	UpdatedAt field.Time   // 更新时间
-	DeletedAt field.Field  // 删除时间
-	Parent    sysMenuBelongsToParent
+	ALL           field.Asterisk
+	ID            field.Int64  // 菜单ID
+	ParentID      field.Int64  // 父菜单ID
+	Name          field.String // 组件名称/路由名称
+	Title         field.String // 菜单名称
+	Path          field.String // 路由地址
+	Component     field.String // 组件地址
+	MenuType      field.Int64  // 菜单类型（1 目录 2 菜单 3 按钮）
+	Status        field.Int64  // 菜单状态(1 正常 2 停用)
+	Perms         field.String // 权限标识
+	Icon          field.String // 菜单图标
+	Order_        field.Int64  // 显示顺序 从大到小
+	Remark        field.String // 备注
+	Query         field.String // 路由参数
+	IsFrame       field.Int64  // 是否外联（1 是 2 否）
+	ShowBadge     field.Int64  // 是否显示徽章（1 是 2 否）
+	ShowTextBadge field.String // 文本徽章内容
+	IsHide        field.Int64  // 是否在菜单中隐藏（1 是 2 否）
+	IsHideTab     field.Int64  // 是否在标签页中隐藏（1 是 2 否）
+	Link          field.String // 外链地址
+	IsIframe      field.Int64  // 是否iframe（1 是 2 否）
+	KeepAlive     field.Int64  // 是否缓存页面（1 是 2否）
+	FixedTab      field.Int64  // 是否固定标签页（1 是 2 否）
+	IsFirstLevel  field.Int64  // 是否为一级菜单
+	ActivePath    field.String // 激活菜单路径
+	CreateBy      field.Int64  // 创建者
+	UpdateBy      field.Int64  // 更新者
+	CreatedAt     field.Time   // 创建时间
+	UpdatedAt     field.Time   // 更新时间
+	DeletedAt     field.Field  // 删除时间
+	Parent        sysMenuBelongsToParent
 
 	Children sysMenuHasManyChildren
-
-	MenuConfig sysMenuHasOneMenuConfig
 
 	fieldMap map[string]field.Expr
 }
@@ -112,9 +128,9 @@ func (s sysMenu) As(alias string) *sysMenu {
 func (s *sysMenu) updateTableName(table string) *sysMenu {
 	s.ALL = field.NewAsterisk(table)
 	s.ID = field.NewInt64(table, "id")
+	s.ParentID = field.NewInt64(table, "parent_id")
 	s.Name = field.NewString(table, "name")
 	s.Title = field.NewString(table, "title")
-	s.ParentID = field.NewInt64(table, "parent_id")
 	s.Path = field.NewString(table, "path")
 	s.Component = field.NewString(table, "component")
 	s.MenuType = field.NewInt64(table, "menu_type")
@@ -123,6 +139,18 @@ func (s *sysMenu) updateTableName(table string) *sysMenu {
 	s.Icon = field.NewString(table, "icon")
 	s.Order_ = field.NewInt64(table, "order")
 	s.Remark = field.NewString(table, "remark")
+	s.Query = field.NewString(table, "query")
+	s.IsFrame = field.NewInt64(table, "is_frame")
+	s.ShowBadge = field.NewInt64(table, "show_badge")
+	s.ShowTextBadge = field.NewString(table, "show_text_badge")
+	s.IsHide = field.NewInt64(table, "is_hide")
+	s.IsHideTab = field.NewInt64(table, "is_hide_tab")
+	s.Link = field.NewString(table, "link")
+	s.IsIframe = field.NewInt64(table, "is_iframe")
+	s.KeepAlive = field.NewInt64(table, "keep_alive")
+	s.FixedTab = field.NewInt64(table, "fixed_tab")
+	s.IsFirstLevel = field.NewInt64(table, "is_first_level")
+	s.ActivePath = field.NewString(table, "active_path")
 	s.CreateBy = field.NewInt64(table, "create_by")
 	s.UpdateBy = field.NewInt64(table, "update_by")
 	s.CreatedAt = field.NewTime(table, "created_at")
@@ -144,11 +172,11 @@ func (s *sysMenu) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (s *sysMenu) fillFieldMap() {
-	s.fieldMap = make(map[string]field.Expr, 20)
+	s.fieldMap = make(map[string]field.Expr, 31)
 	s.fieldMap["id"] = s.ID
+	s.fieldMap["parent_id"] = s.ParentID
 	s.fieldMap["name"] = s.Name
 	s.fieldMap["title"] = s.Title
-	s.fieldMap["parent_id"] = s.ParentID
 	s.fieldMap["path"] = s.Path
 	s.fieldMap["component"] = s.Component
 	s.fieldMap["menu_type"] = s.MenuType
@@ -157,6 +185,18 @@ func (s *sysMenu) fillFieldMap() {
 	s.fieldMap["icon"] = s.Icon
 	s.fieldMap["order"] = s.Order_
 	s.fieldMap["remark"] = s.Remark
+	s.fieldMap["query"] = s.Query
+	s.fieldMap["is_frame"] = s.IsFrame
+	s.fieldMap["show_badge"] = s.ShowBadge
+	s.fieldMap["show_text_badge"] = s.ShowTextBadge
+	s.fieldMap["is_hide"] = s.IsHide
+	s.fieldMap["is_hide_tab"] = s.IsHideTab
+	s.fieldMap["link"] = s.Link
+	s.fieldMap["is_iframe"] = s.IsIframe
+	s.fieldMap["keep_alive"] = s.KeepAlive
+	s.fieldMap["fixed_tab"] = s.FixedTab
+	s.fieldMap["is_first_level"] = s.IsFirstLevel
+	s.fieldMap["active_path"] = s.ActivePath
 	s.fieldMap["create_by"] = s.CreateBy
 	s.fieldMap["update_by"] = s.UpdateBy
 	s.fieldMap["created_at"] = s.CreatedAt
@@ -171,8 +211,6 @@ func (s sysMenu) clone(db *gorm.DB) sysMenu {
 	s.Parent.db.Statement.ConnPool = db.Statement.ConnPool
 	s.Children.db = db.Session(&gorm.Session{Initialized: true})
 	s.Children.db.Statement.ConnPool = db.Statement.ConnPool
-	s.MenuConfig.db = db.Session(&gorm.Session{Initialized: true})
-	s.MenuConfig.db.Statement.ConnPool = db.Statement.ConnPool
 	return s
 }
 
@@ -180,7 +218,6 @@ func (s sysMenu) replaceDB(db *gorm.DB) sysMenu {
 	s.sysMenuDo.ReplaceDB(db)
 	s.Parent.db = db.Session(&gorm.Session{})
 	s.Children.db = db.Session(&gorm.Session{})
-	s.MenuConfig.db = db.Session(&gorm.Session{})
 	return s
 }
 
@@ -342,87 +379,6 @@ func (a sysMenuHasManyChildrenTx) Count() int64 {
 }
 
 func (a sysMenuHasManyChildrenTx) Unscoped() *sysMenuHasManyChildrenTx {
-	a.tx = a.tx.Unscoped()
-	return &a
-}
-
-type sysMenuHasOneMenuConfig struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a sysMenuHasOneMenuConfig) Where(conds ...field.Expr) *sysMenuHasOneMenuConfig {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a sysMenuHasOneMenuConfig) WithContext(ctx context.Context) *sysMenuHasOneMenuConfig {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a sysMenuHasOneMenuConfig) Session(session *gorm.Session) *sysMenuHasOneMenuConfig {
-	a.db = a.db.Session(session)
-	return &a
-}
-
-func (a sysMenuHasOneMenuConfig) Model(m *entity.SysMenu) *sysMenuHasOneMenuConfigTx {
-	return &sysMenuHasOneMenuConfigTx{a.db.Model(m).Association(a.Name())}
-}
-
-func (a sysMenuHasOneMenuConfig) Unscoped() *sysMenuHasOneMenuConfig {
-	a.db = a.db.Unscoped()
-	return &a
-}
-
-type sysMenuHasOneMenuConfigTx struct{ tx *gorm.Association }
-
-func (a sysMenuHasOneMenuConfigTx) Find() (result *entity.SysMenuConfig, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a sysMenuHasOneMenuConfigTx) Append(values ...*entity.SysMenuConfig) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a sysMenuHasOneMenuConfigTx) Replace(values ...*entity.SysMenuConfig) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a sysMenuHasOneMenuConfigTx) Delete(values ...*entity.SysMenuConfig) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a sysMenuHasOneMenuConfigTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a sysMenuHasOneMenuConfigTx) Count() int64 {
-	return a.tx.Count()
-}
-
-func (a sysMenuHasOneMenuConfigTx) Unscoped() *sysMenuHasOneMenuConfigTx {
 	a.tx = a.tx.Unscoped()
 	return &a
 }

@@ -109,28 +109,6 @@ CREATE TABLE `sw_sys_menu` (
   `icon` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '菜单图标',
   `order` int DEFAULT '0' COMMENT '显示顺序 从大到小',
   `remark` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注',
-  `create_by` bigint unsigned DEFAULT NULL COMMENT '创建者',
-  `update_by` bigint unsigned DEFAULT NULL COMMENT '更新者',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_parent_id` (`parent_id`),
-  KEY `idx_menu_type` (`menu_type`),
-  KEY `idx_status` (`status`),
-  KEY `idx_parent_status` (`parent_id`,`status`),
-  KEY `idx_menu_type_status` (`menu_type`,`status`),
-  KEY `idx_deleted_at` (`deleted_at`),
-  CONSTRAINT `fk_menu_parent` FOREIGN KEY (`parent_id`) REFERENCES `sw_sys_menu` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='菜单表';
-
--- ----------------------------
--- Table structure for sw_sys_menu_config
--- ----------------------------
-DROP TABLE IF EXISTS `sw_sys_menu_config`;
-CREATE TABLE `sw_sys_menu_config` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `menu_id` bigint unsigned NOT NULL COMMENT '菜单ID',
   `query` json DEFAULT NULL COMMENT '路由参数',
   `is_frame` tinyint(1) DEFAULT '2' COMMENT '是否外联（1 是 2 否）',
   `show_badge` tinyint(1) DEFAULT '2' COMMENT '是否显示徽章（1 是 2 否）',
@@ -143,14 +121,23 @@ CREATE TABLE `sw_sys_menu_config` (
   `fixed_tab` tinyint(1) DEFAULT '2' COMMENT '是否固定标签页（1 是 2 否）',
   `is_first_level` tinyint(1) DEFAULT '2' COMMENT '是否为一级菜单',
   `active_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '激活菜单路径',
+  `create_by` bigint unsigned DEFAULT NULL COMMENT '创建者',
+  `update_by` bigint unsigned DEFAULT NULL COMMENT '更新者',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_menu_id` (`menu_id`),
+  KEY `idx_parent_id` (`parent_id`),
+  KEY `idx_menu_type` (`menu_type`),
+  KEY `idx_status` (`status`),
+  KEY `idx_parent_status` (`parent_id`,`status`),
+  KEY `idx_menu_type_status` (`menu_type`,`status`),
   KEY `idx_is_hide` (`is_hide`),
   KEY `idx_keep_alive` (`keep_alive`),
-  CONSTRAINT `fk_menu_config_menu` FOREIGN KEY (`menu_id`) REFERENCES `sw_sys_menu` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='菜单配置表';
+  KEY `idx_deleted_at` (`deleted_at`),
+  CONSTRAINT `fk_menu_parent` FOREIGN KEY (`parent_id`) REFERENCES `sw_sys_menu` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='菜单表';
+
 
 -- ----------------------------
 -- Table structure for sw_sys_role_menu
