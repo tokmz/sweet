@@ -11,7 +11,6 @@ import (
 	"sweet/pkg/crypto"
 	"sweet/pkg/errs"
 	"sweet/pkg/utils"
-	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -214,10 +213,10 @@ func (s *UserService) ListUser(ctx context.Context, req *systemDTO.ListUserReq) 
 
 	// 时间范围查询
 	if req.StartTime > 0 {
-		do = do.Where(dao.CreatedAt.Gte(time.Unix(req.StartTime, 0)))
+		do = do.Where(dao.CreatedAt.Gte(utils.UnixToTime(req.StartTime)))
 	}
 	if req.EndTime > 0 {
-		do = do.Where(dao.CreatedAt.Lte(time.Unix(req.EndTime, 0)))
+		do = do.Where(dao.CreatedAt.Lte(utils.UnixToTime(req.EndTime)))
 	}
 
 	// 排序

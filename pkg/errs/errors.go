@@ -25,8 +25,10 @@ var (
 
 // system role error
 var (
-	ErrRoleNotFound   = NewError(1020, "角色不存在")
-	ErrRoleExists     = NewError(1021, "角色已存在")
-	ErrRoleCodeExists = NewError(1022, "角色标识已存在")
-	ErrRoleInUse      = NewError(1023, "角色正在使用中，无法删除")
+	ErrRoleNotFound           = NewError(1020, "角色不存在")
+	ErrRoleCodeExists         = NewError(1021, "角色编码已存在")
+	ErrRoleNameExists         = NewError(1022, "角色名称已存在")
+	ErrRoleInUse              = NewError(1023, "角色正在使用中，无法删除")
+	ErrSystemRoleCannotModify = NewError(1024, "系统内置角色不允许修改")
+	ErrRoleMenuIdsEmpty       = NewError(1025, "角色菜单ID列表不能为空")
 )

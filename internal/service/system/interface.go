@@ -56,11 +56,11 @@ type IRoleService interface {
 	// 获取角色选项
 	RoleOptions(ctx context.Context) (*systemDTO.RoleOptionRes, error)
 	// 获取角色菜单Ids
-	RoleMenuIds(ctx context.Context, req *models.IDReq) (*models.IdsReq, error)
+	RoleMenuIds(ctx context.Context, req *models.IDReq) (*systemDTO.RoleMenuIdsRes, error)
 	// 分配角色菜单
 	AssignRoleMenuIds(ctx context.Context, req *systemDTO.AssignRoleMenuIdsReq) error
 	// 获取角色ApiIds
-	RoleApiIds(ctx context.Context, req *models.IDReq) (*models.IdsReq, error)
+	RoleApiIds(ctx context.Context, req *models.IDReq) (*systemDTO.RoleApiIdsRes, error)
 	// 分配角色ApiIds
 	AssignRoleApiIds(ctx context.Context, req *systemDTO.AssignRoleApiIdsReq) error
 }

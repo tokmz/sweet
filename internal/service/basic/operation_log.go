@@ -8,7 +8,7 @@ import (
 	basicDto "sweet/internal/models/dto/basic"
 	"sweet/internal/models/entity"
 	"sweet/pkg/errs"
-	"time"
+	"sweet/pkg/utils"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -118,11 +118,11 @@ func (s *OperationService) ListOperationLog(ctx context.Context, req *basicDto.L
 
 	// 时间范围条件
 	if req.StartTime != 0 {
-		startTime := time.Unix(req.StartTime, 0)
+		startTime := utils.UnixToTime(req.StartTime)
 		do = do.Where(dao.CreatedAt.Gte(startTime))
 	}
 	if req.EndTime != 0 {
-		endTime := time.Unix(req.EndTime, 0)
+		endTime := utils.UnixToTime(req.EndTime)
 		do = do.Where(dao.CreatedAt.Lte(endTime))
 	}
 

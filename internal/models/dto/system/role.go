@@ -7,12 +7,12 @@ import (
 
 // CreateRoleReq 创建角色
 type CreateRoleReq struct {
-	Name    string  `json:"name"`     // 角色名称
-	Code    string  `json:"code"`     // 角色标识
-	Sort    int64   `json:"sort"`     // 排序
-	IsSuper *int64  `json:"is_super"` // 是否超级管理员：1=是，2否
-	Status  *int64  `json:"status"`   // 状态：1=正常，2=禁用
-	Remark  *string `json:"remark"`   // 备注
+	Name    string  `json:"name" binding:"required"` // 角色名称
+	Code    string  `json:"code" binding:"required"` // 角色标识
+	Sort    int64   `json:"sort"`                    // 排序
+	IsSuper *int64  `json:"is_super"`                // 是否超级管理员：1=是，2否
+	Status  *int64  `json:"status"`                  // 状态：1=正常，2=禁用
+	Remark  *string `json:"remark"`                  // 备注
 }
 
 // DeleteRoleReq 删除角色
@@ -36,6 +36,8 @@ type RoleListReq struct {
 	IsSuper  *int64 `json:"is_super"`  // 是否超级管理员：1=是，2否
 	Status   *int64 `json:"status"`    // 状态：1=正常，2=禁用
 	models.TimeRangeReq
+	models.PageReq
+	models.SortReq
 }
 
 // RoleListItem 角色列表项
@@ -76,14 +78,26 @@ type RoleOptionItem struct {
 // RoleOptionRes 角色选项响应
 type RoleOptionRes models.PageRes[RoleOptionItem]
 
+type IdsRes struct {
+	Ids []int64 `json:"ids"` // ID列表
+}
+
+// RoleMenuIdsRes 角色菜单ID列表响应
+type RoleMenuIdsRes IdsRes
+
 // AssignRoleMenuIdsReq 给角色分配菜单
 type AssignRoleMenuIdsReq struct {
-	models.IDReq         // 角色ID
+	models.IDReq                    // 角色ID
 	MenuIds      []int64 `json:"menu_ids"` // 菜单ID列表
+	ConfirmClear bool   `json:"confirm_clear,omitempty"` // 确认清空权限：当菜单ID列表为空时，必须明确设置为true才允许清空
 }
+
+// RoleApiIdsRes 角色ApiID列表响应
+type RoleApiIdsRes IdsRes
 
 // AssignRoleApiIdsReq 给角色分配Api
 type AssignRoleApiIdsReq struct {
-	models.IDReq         // 角色ID
+	models.IDReq                    // 角色ID
 	ApiIds       []int64 `json:"api_ids"` // ApiID列表
+	ConfirmClear *bool   `json:"confirm_clear,omitempty"` // 确认清空权限：当ApiID列表为空时，必须明确设置为true才允许清空
 }
