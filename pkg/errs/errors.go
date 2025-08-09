@@ -12,14 +12,14 @@ var (
 // system user error
 var (
 	ErrLoginFromOther = NewError(1005, "其他设备登录")
-	ErrUserNotFound   = NewError(1006, "用户不存在")
-	ErrUserExists     = NewError(1007, "用户已存在")
+	ErrUserNotFound   = NewError(1006, "账号不存在")
+	ErrUserExists     = NewError(1007, "该用户名已被注册")
 	ErrPhoneNotValid  = NewError(1008, "手机号格式错误")
-	ErrPhoneNotFound  = NewError(1009, "手机号不存在")
-	ErrPhoneExists    = NewError(1010, "手机号已存在")
+	ErrPhoneNotFound  = NewError(1009, "该手机号不存在")
+	ErrPhoneExists    = NewError(1010, "该手机号已被绑定")
 	ErrEmailNotValid  = NewError(1011, "邮箱格式错误")
 	ErrEmailNotFound  = NewError(1012, "邮箱不存在")
-	ErrEmailExists    = NewError(1013, "邮箱已存在")
+	ErrEmailExists    = NewError(1013, "该邮箱已被绑定")
 	ErrPassword       = NewError(1014, "密码错误")
 )
 
